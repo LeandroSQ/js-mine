@@ -27,6 +27,12 @@ After playing a little bit with `WebGL 2.0` this is what I came up with:
 
 I think I spent more time coming up with the `GIF` above than actually coding it. Since I wanted something nice and `screen recording` + `gif conversion` + `free online editors` were not cutting it, I decided to save the frames, zip them, download and run `ffmpeg` to convert them to a gif.
 
+Not long after that I introduced textures and a simple lighting system:
+<p align="center">
+	<img src=".github/screenshots/day0-1.gif" style="height: 400px; border-radius: 10pt; box-shadow: 0px 5pt 15pt rgba(0, 0, 0, 0.25)"/>
+</p>
+
+<p align="center">Now we talking</p>
 
 ## Used in this project
 

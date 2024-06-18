@@ -1,7 +1,6 @@
 /* eslint-disable max-statements */
 import { mat4 } from "gl-matrix";
 import { Main } from "../main";
-import { Camera } from "../models/camera";
 import { Cube } from "../models/cube";
 import { Optional } from "../types/optional";
 import { Size } from "../types/size";
@@ -9,6 +8,7 @@ import { FileUtils } from "../utils/file";
 import { Log } from "../utils/log";
 import { Theme } from "../utils/theme";
 import { Color } from "../utils/color";
+import { ImageUtils } from "../utils/image";
 
 const GL = WebGLRenderingContext;
 
@@ -21,28 +21,47 @@ export class WebGLRenderer {
 
 	private isDirty = false;
 
-	// Locations
+	private textures = {
+		diffuse: null as Optional<WebGLTexture>
+	};
+
 	private locations = {
 		attributes: {
 			position: 0 as GLuint,
-			normal: 1 as GLuint
+			textureCoord: 1 as GLuint,
+			normal: 2 as GLuint
 		},
 		uniforms: {
 			projection: null as Optional<WebGLUniformLocation>,
 			model: null as Optional<WebGLUniformLocation>,
-			view: null as Optional<WebGLUniformLocation>
+			view: null as Optional<WebGLUniformLocation>,
+			texture: null as Optional<WebGLUniformLocation>
 		}
 	};
 
-	// Buffers
 	private buffers = {
 		position: null as Optional<WebGLBuffer>,
+		texture: null as Optional<WebGLBuffer>,
 		normal: null as Optional<WebGLBuffer>,
-		index: null as Optional<WebGLBuffer>,
+		index: null as Optional<WebGLBuffer>
 	};
 
 	constructor(private main: Main) {  }
 
+	// #region Utility
+	public invalidate() {
+		this.isDirty = true;
+	}
+
+	public setSize(size: Size) {
+		Log.info("WebGLRenderer", "Setting size...");
+		this.canvas.width = size.width;
+		this.canvas.height = size.height;
+		this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+	}
+	// #endregion
+
+	// #region Setup
 	// #region Shaders
 	private async loadShader(url: string, type: number) {
 		Log.info("WebGLRenderer", `Loading shader: ${url}...`);
@@ -102,6 +121,7 @@ export class WebGLRenderer {
 		this.locations.uniforms.projection = this.gl.getUniformLocation(this.shaderProgram, "u_projection");
 		this.locations.uniforms.model = this.gl.getUniformLocation(this.shaderProgram, "u_model");
 		this.locations.uniforms.view = this.gl.getUniformLocation(this.shaderProgram, "u_view");
+		this.locations.uniforms.texture = this.gl.getUniformLocation(this.shaderProgram, "u_texture");
 	}
 
 	private setupBuffers() {
@@ -124,6 +144,36 @@ export class WebGLRenderer {
 		this.buffers.index = this.createBuffer();
 		this.gl.bindBuffer(GL.ELEMENT_ARRAY_BUFFER, this.buffers.index);
 		this.gl.bufferData(GL.ELEMENT_ARRAY_BUFFER, Cube.indices, GL.STATIC_DRAW);
+
+		// Texture
+		Log.debug("WebGLRenderer", "Creating texture buffer...");
+		this.buffers.texture = this.createBuffer();
+		this.gl.bindBuffer(GL.ARRAY_BUFFER, this.buffers.texture);
+		this.gl.bufferData(GL.ARRAY_BUFFER, Cube.textureCoordinates, GL.STATIC_DRAW);
+	}
+	// #endregion
+
+	// #region Textures
+	private async loadTexture(url: string) {
+		Log.info("WebGLRenderer", `Loading texture: ${url}...`);
+		const image = await ImageUtils.load(url);
+		const texture = this.gl.createTexture();
+		if (!texture) throw new Error("Could not create texture");
+
+		this.gl.bindTexture(GL.TEXTURE_2D, texture);
+		this.gl.texImage2D(GL.TEXTURE_2D, 0, GL.RGBA, GL.RGBA, GL.UNSIGNED_BYTE, image);
+		this.gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, GL.NEAREST);
+		this.gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, GL.NEAREST);
+		this.gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_S, GL.CLAMP_TO_EDGE);
+		this.gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_T, GL.CLAMP_TO_EDGE);
+
+		return texture;
+	}
+
+	private async setupTextures() {
+		Log.info("WebGLRenderer", "Setting up textures...");
+		this.gl.pixelStorei(GL.UNPACK_FLIP_Y_WEBGL, true);
+		this.textures.diffuse = await this.loadTexture("texture1");
 	}
 	// #endregion
 
@@ -145,18 +195,9 @@ export class WebGLRenderer {
 		await this.setupShaderProgram();
 		this.setupUniforms();
 		this.setupBuffers();
+		this.setupTextures();
 	}
-
-	public invalidate() {
-		this.isDirty = true;
-	}
-
-	public setSize(size: Size) {
-		Log.info("WebGLRenderer", "Setting size...");
-		this.canvas.width = size.width;
-		this.canvas.height = size.height;
-		this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
-	}
+	// #endregion
 
 	// #region Render
 	private getModelMatrix() {
@@ -179,6 +220,14 @@ export class WebGLRenderer {
 		this.gl.bindBuffer(GL.ARRAY_BUFFER, this.buffers.normal);
 		this.gl.vertexAttribPointer(this.locations.attributes.normal, 1, GL.FLOAT, false, 0, 0);// 1 float per vertex
 		this.gl.enableVertexAttribArray(this.locations.attributes.normal);
+
+		// Texture
+		this.gl.bindBuffer(GL.ARRAY_BUFFER, this.buffers.texture);
+		this.gl.vertexAttribPointer(this.locations.attributes.textureCoord, 2, GL.FLOAT, false, 0, 0);
+		this.gl.enableVertexAttribArray(this.locations.attributes.textureCoord);
+		this.gl.activeTexture(GL.TEXTURE0);
+		this.gl.bindTexture(GL.TEXTURE_2D, this.textures.diffuse);
+		this.gl.uniform1i(this.locations.uniforms.texture, 0);
 	}
 
 	private bindProjectionMatrix() {
