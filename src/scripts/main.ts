@@ -7,7 +7,7 @@ import { AState } from "./types/state";
 import { Gizmo } from "./utils/gizmo";
 import { Cursor } from "./utils/cursor";
 import { Theme } from "./utils/theme";
-import { MARGIN, RECORDING_FRAME_RATE, SIMULATION_FREQUENCY, SIMULATION_SUBSTEPS, USE_ANIMATION_FRAME } from "./constants";
+import { MARGIN, RECORDING_FRAME_RATE, RECORDING_VIEWPORT, SIMULATION_FREQUENCY, SIMULATION_SUBSTEPS, USE_ANIMATION_FRAME } from "./constants";
 import { FontUtils } from "./utils/font";
 import { StatePlay } from "./states/state-play";
 import { GUIRenderer } from "./renderer/gui-renderer";
@@ -170,10 +170,17 @@ export class Main {
 				this.isRecording = false;
 				Log.info("Main", "Recording stopped");
 				GIFUtils.generate("recording");
+				this.onResize();
 			}
 		} else if (InputHandler.isKeyJustPressed(Key.Space)) {
 			Log.info("Main", "Recording started");
 			this.isRecording = true;
+
+			// Resize canvas
+			this.screen = RECORDING_VIEWPORT;
+			this.gui.setSize(this.screen);
+			this.gl.setSize(this.screen);
+			this.invalidate();
 		}
 	}
 

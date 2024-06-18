@@ -173,7 +173,7 @@ export class WebGLRenderer {
 	private async setupTextures() {
 		Log.info("WebGLRenderer", "Setting up textures...");
 		this.gl.pixelStorei(GL.UNPACK_FLIP_Y_WEBGL, true);
-		this.textures.diffuse = await this.loadTexture("texture1");
+		this.textures.diffuse = await this.loadTexture("terrain");
 	}
 	// #endregion
 
