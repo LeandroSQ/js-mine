@@ -1,6 +1,7 @@
 export const MARGIN = 15;
 
 // Mainly for debugging purposes
+export const RECORDING_FRAME_RATE = 1.0 / 24;
 export const SIMULATION_FREQUENCY = 60;
 export const SIMULATION_SUBSTEPS = 1;
 export const USE_ANIMATION_FRAME = true;

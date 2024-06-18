@@ -1,83 +1,32 @@
 # Mine
 
-Typescript implementation of the [Chromium minesaur game](https://chromemine.com/), made using the HTML5 Canvas API.
+WebGL minecraft-like concept.
 
-<center>
+<!-- <center>
     <p float="left" align="center">
-		<img src=".github/screenshots/screenshot01.png" style="width: 48%"/>
-        <img src=".github/screenshots/screenshot02.png" style="width: 48%"/>
+		<img src=".github/screenshots/day0.svg" style="width: 48%"/>
+        <img src=".github/screenshots/day0.gif" style="width: 48%"/>
     </p>
-</center>
+</center> -->
 
 <p align="center">
 	<a href="https://leandrosq.github.io/js-mine/">Live demo here</a>
 </p>
 
-## About
+## Devlog
 
-It is a simple implementation of the Chromium minesaur game, with some minor changes.
+### Day 0
 
-## Features
+After playing a little bit with `WebGL 2.0` this is what I came up with:
 
-- [x] Dark mode
-- [x] Light mode
-- [x] Score system
-  - [x] High score system
-- [x] Game over screen
-- [ ] Pause screen
-- [x] AI mode
-- [x] Sound effects
-- [x] Mobile support
-  - [X] No pterodactyls due to no crouching
-  - [X] Touch controls
-  - [X] Responsive game speed
-  - [X] Vibration API
-- [X] Keyboard and mouse controls
-- [X] GamePad support
-  - [X] Rumble effect
-- [x] Menu with animations
-- [x] Physics simulation with substeps
-  - [x] Using Velocity Verlet integration
-- [x] Pixel perfect collision detection
-<p float="left" style="margin-left: 30pt">
-	<img src=".github/screenshots/pixelperfect.gif" style="width: 200px; border-radius: 5pt; box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.35)"/>
+<p align="center">
+	<img src=".github/screenshots/day0.gif" style="height: 400px; border-radius: 10pt; box-shadow: 0px 5pt 15pt rgba(0, 0, 0, 0.25)"/>
 </p>
 
-## How to play
+<p align="center">Some really cool looking cube, <br>where each pixel is being colored by their normal.</p>
 
-Jump over the obstacles and try to get the highest score possible!
+I think I spent more time coming up with the `GIF` above than actually coding it. Since I wanted something nice and `screen recording` + `gif conversion` + `free online editors` were not cutting it, I decided to save the frames, zip them, download and run `ffmpeg` to convert them to a gif.
 
-### Keyboard
-
-| Key | Icon| Description |
-| -- | -- | -- |
-| <kbd>Arrow up</kbd> | <img src=".github/images/Arrow_Up_Key_Dark.png" align="center" height="32"> | Jump |
-| <kbd>Arrow down</kbd> | <img src=".github/images/Arrow_Up_Key_Dark.png" align="center" height="32"> | Duck/Crouch |
-| <kbd>A</kbd> | <img src=".github/images/A_Key_Dark.png" align="center" height="32"> | Toggle AI |
-
-### Mouse
-
-| Key | Icon| Description |
-| -- | -- | -- |
-| <kbd>Left click</kbd> | <img src=".github/images/Mouse_Left_Key_Dark.png" align="center" height="32"> | Jump |
-| <kbd>Right click</kbd> | <img src=".github/images/Mouse_Right_Key_Dark.png" align="center" height="32"> | Duck/Crouch |
-| <kbd>Middle click</kbd> | <img src=".github/images/Mouse_Middle_Key_Dark.png" align="center" height="32"> | Toggle AI |
-
-### Touch
-
-| Key | Icon| Description |
-| -- | -- | -- |
-| <kbd>Tap</kbd> | <img src=".github/images/Gesture_Tap.png" align="center" height="32"> | Jump |
-
-### Game pad
-
-<small>The game supports any GamePad, being it wireless or wired, Xbox, PS or generic!</small>
-
-| Button | Icon | Description |
-| -- | -- | -- |
-| <kbd>A</kbd> or <kbd>D-Pad Up</kbd> | <img src=".github/images/GamePad_A.png" align="center" height="24"> or <img src=".github/images/GamePad_Up.png" align="center" height="24"> | Jump |
-| <kbd>B</kbd> or <kbd>D-Pad Up</kbd> | <img src=".github/images/GamePad_B.png" align="center" height="24"> or <img src=".github/images/GamePad_Down.png" align="center" height="24"> | Duck/Crouch |
-| <kbd>Start</kbd> | <img src=".github/images/GamePad_Start.png" align="center" height="32"> | Toggle AI |
 
 ## Used in this project
 
@@ -89,10 +38,9 @@ Jump over the obstacles and try to get the highest score possible!
 | Esbuild | For bundling |
 | gulp | For task automation |
 | SASS | For CSS preprocessing |
-| oklch | For color manipulation |
 | Github actions | For CI, building and deploying to github pages |
 | Google fonts | For the [Pixelify Sans font](https://fonts.google.com/specimen/Pixelify+Sans) |
-| Google Icons | For the [Sport tennis icon](https://fonts.google.com/icons?selected=Material%20Symbols%20Outlined%3Asports_tennis%3AFILL%400%3Bwght%40400%3BGRAD%400%3Bopsz%4024) used as favicon |
 | [Real favicon generator](https://realfavicongenerator.net/) | For generating the favicon |
-| [Chrome mine game](https://chromemine.com/) | For sounds, images and inspiration |
-| [Those Awesome Guys](https://thoseawesomeguys.com/) | For the input images for keyboard, tap, mouse and gamepad |
+| [gl-matrix](http://glmatrix.net/) | For matrix operations, this library is awesome |
+| [zipjs](https://gildas-lormeau.github.io/zip.js/) | For zip file manipulation ~duh~ |
+| [filesaver.js](https://github.com/eligrey/FileSaver.js) | For saving files ~duh~ |

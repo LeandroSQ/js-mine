@@ -7,7 +7,7 @@ import { AState } from "./types/state";
 import { Gizmo } from "./utils/gizmo";
 import { Cursor } from "./utils/cursor";
 import { Theme } from "./utils/theme";
-import { MARGIN, SIMULATION_FREQUENCY, SIMULATION_SUBSTEPS, USE_ANIMATION_FRAME } from "./constants";
+import { MARGIN, RECORDING_FRAME_RATE, SIMULATION_FREQUENCY, SIMULATION_SUBSTEPS, USE_ANIMATION_FRAME } from "./constants";
 import { FontUtils } from "./utils/font";
 import { StatePlay } from "./states/state-play";
 import { GUIRenderer } from "./renderer/gui-renderer";
@@ -15,6 +15,7 @@ import { Size } from "./types/size";
 import { WebGLRenderer } from "./renderer/webgl-renderer";
 import { Camera } from "./models/camera";
 import { Key } from "./types/key";
+import { GIFUtils } from "./utils/gif";
 
 export class Main {
 
@@ -23,6 +24,10 @@ export class Main {
 	public gui = new GUIRenderer(this);
 	public camera = new Camera();
 	public gl = new WebGLRenderer(this);
+
+	// Recording
+	private isRecording = false;
+	private recordingTimer = 0;
 
 	// Frame
 	private handleAnimationFrameRequest = -1;
@@ -157,9 +162,27 @@ export class Main {
 		}
 	}
 
+	private updateRecording(deltaTime: number) {
+		if (this.isRecording) {
+			this.recordingTimer += deltaTime;
+			if (this.recordingTimer >= 5.0) {
+				this.recordingTimer = 1.0;
+				this.isRecording = false;
+				Log.info("Main", "Recording stopped");
+				GIFUtils.generate("recording");
+			}
+		} else if (InputHandler.isKeyJustPressed(Key.Space)) {
+			Log.info("Main", "Recording started");
+			this.isRecording = true;
+		}
+	}
+
 	private update(newTime: DOMHighResTimeStamp) {
-		const deltaTime = (newTime - this.lastFrameTime) / 1000.0;
+		let deltaTime = (newTime - this.lastFrameTime) / 1000.0;
 		this.lastFrameTime = newTime;
+
+		this.updateRecording(deltaTime);
+		if (this.isRecording) deltaTime = RECORDING_FRAME_RATE;
 
 		const dt = deltaTime / SIMULATION_SUBSTEPS;
 		for (let i = 0; i < SIMULATION_SUBSTEPS; i++) {
@@ -187,6 +210,8 @@ export class Main {
 
 		// GL
 		this.gl.render();
+
+		if (this.isRecording) GIFUtils.addFrame(this.gl.canvas, this.gui.canvas.element);
 
 		this.requestNextFrame();
 	}

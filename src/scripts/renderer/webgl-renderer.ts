@@ -7,6 +7,8 @@ import { Optional } from "../types/optional";
 import { Size } from "../types/size";
 import { FileUtils } from "../utils/file";
 import { Log } from "../utils/log";
+import { Theme } from "../utils/theme";
+import { Color } from "../utils/color";
 
 const GL = WebGLRenderingContext;
 
@@ -190,7 +192,8 @@ export class WebGLRenderer {
 		this.isDirty = false;
 
 		// Scene
-		this.gl.clearColor(0.0, 0.0, 0.0, 1.0);
+		const color = Color.decode(Theme.background, true);
+		this.gl.clearColor(color.r, color.g, color.b, 1.0);
 		this.gl.clearDepth(1.0);
 		this.gl.cullFace(GL.BACK);
 		this.gl.enable(GL.DEPTH_TEST);

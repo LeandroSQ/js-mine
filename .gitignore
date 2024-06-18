@@ -9,3 +9,4 @@ yarn-error.log
 data/cache
 .vscode
 *.aseprite
+scripts/output

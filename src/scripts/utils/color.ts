@@ -1,5 +1,27 @@
 export abstract class Color {
 
+	public static decode(color: string, normalize = false): { r: number, g: number, b: number; } {
+		let tmp = color;
+		if (tmp.startsWith("#")) tmp = tmp.slice(1);
+
+		// Expand shorthand form (e.g. "03F") to full form (e.g. "0033FF")
+		if (tmp.length === 3) tmp = tmp.replace(/./g, "$&$&");
+
+		const r = parseInt(tmp.slice(0, 2), 16);
+		const g = parseInt(tmp.slice(2, 4), 16);
+		const b = parseInt(tmp.slice(4, 6), 16);
+
+		if (normalize) {
+			return {
+				r: r / 255,
+				g: g / 255,
+				b: b / 255
+			};
+		}
+
+		return { r, g, b };
+	}
+
 	public static alpha(color: string, alpha: number): string {
 		let c = color;
 
