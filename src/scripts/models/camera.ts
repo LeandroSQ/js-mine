@@ -5,9 +5,9 @@ export class Camera {
 
 	public position: Vector3;
 	public rotation: Vector3;
-	public fov = 45;
+	public fov = 45 * Math.PI / 180;
 	public near = 0.1;
-	public far = 1000;
+	public far = 1000.0;
 
 	constructor() {
 		this.position = Vector3.create();
