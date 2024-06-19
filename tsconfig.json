@@ -1,0 +1,38 @@
+{
+	"compilerOptions": {
+		"module": "ESNext",
+		"target": "ES2022",
+		"lib": ["ES2022", "DOM"],
+
+		"skipLibCheck": true,
+		"noFallthroughCasesInSwitch": true,
+		"forceConsistentCasingInFileNames": true,
+		"useDefineForClassFields": true,
+		"strictNullChecks": true,
+		"moduleResolution": "Bundler",
+
+		"allowJs": true,
+		"checkJs": true,
+
+		"types": ["@webgpu/types"],
+		
+		"emitDecoratorMetadata": true,
+		"experimentalDecorators": true,
+
+	},
+	"include": [
+		"types/*.d.ts",
+		"src/scripts/core/extensions/*.ts",
+		"**/*.ts",
+		"**/*.mts",
+		"**/*.cts",
+		"**/*.tsx",
+		"**/*.mtsx",
+		"**/*.js",
+		"**/*.mjs",
+		"**/*.cjs",
+		"**/*.jsx",
+		"**/*.mjsx"
+	],
+	"exclude": ["dist", "build", "coverage", "_lintignore", "**/*-buildignore*", "**/*_buildignore*"],
+}

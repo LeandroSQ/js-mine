@@ -30,13 +30,23 @@
 	],
 	"devDependencies": {
 		"@types/gl-matrix": "^3.2.0",
-		"@typescript-eslint/eslint-plugin": "^5.48.2",
-		"@typescript-eslint/parser": "^5.48.2",
+		"@eslint/js": "^8.56.0",
+		"@stylistic/eslint-plugin": "^1.5.1",
+		"@stylistic/eslint-plugin-js": "^1.5.1",
+		"@stylistic/eslint-plugin-ts": "^1.5.1",
+		"@types/eslint-config-prettier": "^6.11.3",
+		"eslint-config-prettier": "^9.1.0",
+		"eslint-import-resolver-typescript": "^3.6.1",
+		"eslint-plugin-import": "^2.29.1",
+		"eslint-plugin-jest": "^27.9.0",
+		"eslint-plugin-jsdoc": "^47.0.2",
+		"eslint-plugin-prettier": "^5.1.2",
 		"browser-sync": "^2.27.10",
-		"eslint": "^8.32.0",
-		"eslint-config-google": "^0.14.0",
-		"eslint-config-prettier": "^8.6.0",
-		"prettier": "^2.8.3"
+		"globals": "^13.24.0",
+		"prettier": "^3.1.1",
+		"eslint": "^8.57.0",
+		"@webgpu/types": "^0.1.38",
+		"source-map-support": "^0.5.21"
 	},
 	"dependencies": {
 		"del": "^6.0.0",
@@ -55,6 +65,6 @@
 		"jszip": "^3.10.1",
 		"mathjs": "^11.6.0",
 		"sass": "^1.56.1",
-		"typescript": "^5.3.3"
+		"typescript": "^5.4.3"
 	}
 }
