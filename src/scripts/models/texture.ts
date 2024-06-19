@@ -3,6 +3,7 @@ import { ImageUtils } from "../utils/image";
 
 export class Texture {
 
+
 	private texture: Optional<WebGLTexture> = null;
 
 	constructor(private gl: WebGLRenderingContext | WebGL2RenderingContext) { }

@@ -34,6 +34,21 @@ Not long after that I introduced textures and a simple lighting system:
 
 <p align="center">Now we talking</p>
 
+### Day 1
+
+Did not have much time today, so mainly cleaned up the code, added wrappers for `WebGL` boilerplate which made life easier and also played with some post-processing effects.
+
+<p align="center">
+	<img src=".github/screenshots/day1.gif" style="height: 400px; border-radius: 10pt; box-shadow: 0px 5pt 15pt rgba(0, 0, 0, 0.25)"/>
+</p>
+
+<p align="center">Original on the <b>left</b> and new on the <b>right</b></p>
+
+Added some `sharpen`, `brightness`, `contrast` and `saturation`, which works great.
+And also tried to add `FXAA`, but it either introduces too much blur on the textures or does not work at all, not sure if this is apparent on the GIF above.
+But mostly important, the rendering pipeline now supports frame buffers and drawing to textures with multi-pass filtering, all done with my wrappers which makes me happy.
+
+
 ## Used in this project
 
 | Name | Description |
@@ -50,3 +65,4 @@ Not long after that I introduced textures and a simple lighting system:
 | [gl-matrix](http://glmatrix.net/) | For matrix operations, this library is awesome |
 | [zipjs](https://gildas-lormeau.github.io/zip.js/) | For zip file manipulation ~duh~ |
 | [filesaver.js](https://github.com/eligrey/FileSaver.js) | For saving files ~duh~ |
+| [thebennybox](https://www.youtube.com/watch?v=Z9bYzpwVINA) | On the bright explanation of FXAA |

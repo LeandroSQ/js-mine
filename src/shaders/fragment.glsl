@@ -16,5 +16,8 @@ void main() {
     float lightIntensity = pow(max(dot(v_normal, lightDirection), 0.0), 2.0) + 0.15;
 
 	vec3 color = lightColor * lightIntensity + shadowColor * (1.0 - lightIntensity);
-	fragColor = vec4(color, 1.0) * texture(u_texture, v_texCoord);
+
+	// Flip texture vertically
+	vec2 flippedTexCoord = vec2(v_texCoord.x, 1.0 - v_texCoord.y);
+	fragColor = vec4(color, 1.0) * texture(u_texture, flippedTexCoord);
 }

@@ -2,6 +2,8 @@ import { Optional } from "./../types/optional";
 import { FileUtils } from "../utils/file";
 import { Log } from "../utils/log";
 import { Dictionary } from "../types/dictionary";
+import { mat4 } from "gl-matrix";
+import * as GLMatrix from "gl-matrix";
 
 export type BufferDataType = Float32Array | Uint16Array | Uint8Array | Int16Array | Int8Array | Uint32Array | Int32Array;
 export type BufferDataTypeConstructor = typeof Float32Array | typeof Uint16Array | typeof Uint8Array | typeof Int16Array | typeof Int8Array | typeof Uint32Array | typeof Int32Array;
@@ -125,43 +127,26 @@ export class Shader {
 	private setupUniforms(uniforms: string[]) {
 		if (!this.program) throw new Error(`Shader '${this.name}' program not loaded`);
 
+		// Firefox doesn't really like to have the uniforms in the same order as Chrome-based browsers
+		// So I'll just go over all the active uniforms and then later check if there's a typo, for compatibility there
+		const activeUniforms = this.gl.getProgramParameter(this.program, GL.ACTIVE_UNIFORMS);
+		if (!activeUniforms) throw new Error(`Could not get active uniforms for shader '${this.name}'`);
+
 		this.uniforms = {};
-		for (let i = 0; i < uniforms.length; i++) {
-			const location = this.gl.getUniformLocation(this.program, uniforms[i]);
-			if (!location) throw new Error(`Could not find uniform '${uniforms[i]}' on shader '${this.name}'`);
+		for (let i = 0; i < activeUniforms; i++) {
+			const info = this.gl.getActiveUniform(this.program, i);
+			if (!info) throw new Error(`Could not get active uniform '${i}' on shader '${this.name}'`);
 
-			const type = this.gl.getActiveUniform(this.program, i);
-			if (!type) throw new Error(`Could not get type of uniform '${uniforms[i]}' on shader '${this.name}'`);
+			const location = this.gl.getUniformLocation(this.program, info.name);
+			if (!location) throw new Error(`Could not get location of uniform '${info.name}' on shader '${this.name}'`);
 
-			this.uniforms[uniforms[i]] = { location, type: type.type };
+			if (!uniforms.includes(info.name)) throw Error(`Uniform '${info.name}' is not being used on shader '${this.name}'`);
+
+			this.uniforms[info.name] = { location, type: info.type };
 		}
-	}
 
-	private bufferDataTypeToGLType(type: BufferDataTypeConstructor): GLenum {
-		switch (type) {
-			case Float32Array:
-				return GL.FLOAT;
-				break;
-			case Uint16Array:
-				return GL.UNSIGNED_SHORT;
-				break;
-			case Uint8Array:
-				return GL.UNSIGNED_BYTE;
-				break;
-			case Int16Array:
-				return GL.SHORT;
-				break;
-			case Int8Array:
-				return GL.BYTE;
-				break;
-			case Uint32Array:
-				return GL.UNSIGNED_INT;
-				break;
-			case Int32Array:
-				return GL.INT;
-				break;
-			default:
-				throw new Error(`Buffer data type '${type}' not supported`);
+		for (const uniform of uniforms) {
+			if (!this.uniforms.hasOwnProperty(uniform)) throw new Error(`Could not find uniform '${uniform}' on shader '${this.name}'`);
 		}
 	}
 
@@ -251,6 +236,9 @@ export class Shader {
 				break;
 			case GL.FLOAT_MAT4:
 				this.gl.uniformMatrix4fv(uniform.location, false, value as Float32List);
+				break;
+			case GL.SAMPLER_2D:
+				this.gl.uniform1i(uniform.location, value as number);
 				break;
 			default:
 				throw new Error(`Uniform type '${uniform.type}' not supported`);
