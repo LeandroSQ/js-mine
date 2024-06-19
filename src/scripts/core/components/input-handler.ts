@@ -4,10 +4,10 @@ import { Vector2 } from "../../models/vector2.ts";
 import { Log } from "../../utils/log";
 import { Dictionary } from "../../types/dictionary";
 import { InputState } from "../../types/input-state.ts";
-import { Key } from "../../types/key";
-import { MouseButton } from "../../types/mouse-button";
+import { Key } from "../../enums/key";
+import { MouseButton } from "../../enums/mouse-button";
 import { Optional } from "../../types/optional.ts";
-import { GamepadButton } from "../../types/gamepad-button.ts";
+import { GamepadButton } from "../../enums/gamepad-button";
 
 export abstract class InputHandler {
 

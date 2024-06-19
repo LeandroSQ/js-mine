@@ -1,4 +1,4 @@
-import { CursorType } from "../types/cursor-type";
+import { CursorType } from "../enums/cursor-type";
 
 export abstract class Cursor {
 

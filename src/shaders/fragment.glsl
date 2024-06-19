@@ -17,9 +17,4 @@ void main() {
 
 	vec3 color = lightColor * lightIntensity + shadowColor * (1.0 - lightIntensity);
 	fragColor = vec4(color, 1.0) * texture(u_texture, v_texCoord);
-
-
-
-
-	// fragColor = vec4(color * 0.5, 1.0) * texture(u_texture, v_texCoord);
 }

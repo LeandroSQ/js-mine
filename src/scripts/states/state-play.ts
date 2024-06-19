@@ -2,9 +2,9 @@ import { Main } from "../main";
 import { AState } from "../types/state";
 import { Log } from "../utils/log";
 import { Cursor } from "../utils/cursor";
-import { CursorType } from "../types/cursor-type";
+import { CursorType } from "../enums/cursor-type";
 import { InputHandler } from "../core/components/input-handler";
-import { Key } from "../types/key";
+import { Key } from "../enums/key";
 import { GIFUtils } from "../utils/gif";
 
 export class StatePlay extends AState {

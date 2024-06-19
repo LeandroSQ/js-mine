@@ -51,6 +51,8 @@ declare global {
 
 	const DEBUG: boolean;
 
+	let GL: typeof WebGLRenderingContext | typeof WebGL2RenderingContext;
+
 }
 
 export { };

@@ -14,7 +14,7 @@ import { GUIRenderer } from "./renderer/gui-renderer";
 import { Size } from "./types/size";
 import { WebGLRenderer } from "./renderer/webgl-renderer";
 import { Camera } from "./models/camera";
-import { Key } from "./types/key";
+import { Key } from "./enums/key";
 import { GIFUtils } from "./utils/gif";
 
 export class Main {

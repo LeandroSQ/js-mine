@@ -9,42 +9,23 @@ import { Log } from "../utils/log";
 import { Theme } from "../utils/theme";
 import { Color } from "../utils/color";
 import { ImageUtils } from "../utils/image";
-
-const GL = WebGLRenderingContext;
+import { Quad } from "../models/quad";
+import { Shader } from "../models/shader";
+import { Texture } from "../models/texture";
 
 export class WebGLRenderer {
 
 	public canvas: HTMLCanvasElement;
 	public gl: WebGLRenderingContext | WebGL2RenderingContext;
 
-	private shaderProgram: WebGLProgram;
+	private meshShader: Shader;
+	private finalPassShader: Shader;
+
+	private textureAtlas: Texture;
 
 	private isDirty = false;
 
-	private textures = {
-		diffuse: null as Optional<WebGLTexture>
-	};
-
-	private locations = {
-		attributes: {
-			position: 0 as GLuint,
-			textureCoord: 1 as GLuint,
-			normal: 2 as GLuint
-		},
-		uniforms: {
-			projection: null as Optional<WebGLUniformLocation>,
-			model: null as Optional<WebGLUniformLocation>,
-			view: null as Optional<WebGLUniformLocation>,
-			texture: null as Optional<WebGLUniformLocation>
-		}
-	};
-
-	private buffers = {
-		position: null as Optional<WebGLBuffer>,
-		texture: null as Optional<WebGLBuffer>,
-		normal: null as Optional<WebGLBuffer>,
-		index: null as Optional<WebGLBuffer>
-	};
+	private frameBuffer: WebGLFramebuffer;
 
 	constructor(private main: Main) {  }
 
@@ -62,118 +43,25 @@ export class WebGLRenderer {
 	// #endregion
 
 	// #region Setup
-	// #region Shaders
-	private async loadShader(url: string, type: number) {
-		Log.info("WebGLRenderer", `Loading shader: ${url}...`);
-		const source = await FileUtils.load(url);
-		const shader = this.gl.createShader(type);
-		if (!shader) throw new Error("Could not create shader");
-
-		Log.debug("WebGLRenderer", `Compiling shader: ${url}...`);
-		this.gl.shaderSource(shader, source);
-		this.gl.compileShader(shader);
-		if (!this.gl.getShaderParameter(shader, GL.COMPILE_STATUS)) {
-			const info = this.gl.getShaderInfoLog(shader);
-			this.gl.deleteShader(shader);
-			throw new Error(`Could not compile shader '${url}': ${info}`);
-		}
-
-		return shader;
-	}
-
-	private async loadShaders() {
-		Log.info("WebGLRenderer", "Loading shaders...");
-		const vertexShader = await this.loadShader("shaders/vertex.glsl", GL.VERTEX_SHADER);
-		const fragmentShader = await this.loadShader("shaders/fragment.glsl", GL.FRAGMENT_SHADER);
-		this.gl.attachShader(this.shaderProgram, vertexShader);
-		this.gl.attachShader(this.shaderProgram, fragmentShader);
-	}
-
-	private async setupShaderProgram() {
-		Log.debug("WebGLRenderer", "Creating shader program...");
-		const program = this.gl.createProgram();
-		if (!program) throw new Error("Could not create shader program");
-		this.shaderProgram = program;
-		await this.loadShaders();
-		this.gl.linkProgram(program);
-		this.gl.validateProgram(program);
-		if (!this.gl.getProgramParameter(program, GL.LINK_STATUS)) {
-			const info = this.gl.getProgramInfoLog(program);
-			this.gl.deleteProgram(program);
-			throw new Error(`Could not link shader program: ${info}`);
-		}
-	}
-	// #endregion
-
-	// #region Buffers
-	private createBuffer(): WebGLBuffer {
-		const buffer = this.gl.createBuffer();
-		if (!buffer) {
-			this.gl.deleteBuffer(buffer);
-			throw new Error("Could not create buffer");
-		}
-
-		return buffer;
-	}
-
-	private setupUniforms() {
-		Log.debug("WebGLRenderer", "Getting uniform locations...");
-		this.locations.uniforms.projection = this.gl.getUniformLocation(this.shaderProgram, "u_projection");
-		this.locations.uniforms.model = this.gl.getUniformLocation(this.shaderProgram, "u_model");
-		this.locations.uniforms.view = this.gl.getUniformLocation(this.shaderProgram, "u_view");
-		this.locations.uniforms.texture = this.gl.getUniformLocation(this.shaderProgram, "u_texture");
-	}
-
-	private setupBuffers() {
-		Log.info("WebGLRenderer", "Setting up buffers...");
-
-		// Position
-		Log.debug("WebGLRenderer", "Creating position buffer...");
-		this.buffers.position = this.createBuffer();
-		this.gl.bindBuffer(GL.ARRAY_BUFFER, this.buffers.position);
-		this.gl.bufferData(GL.ARRAY_BUFFER, Cube.vertices, GL.STATIC_DRAW);
-
-		// Normals
-		Log.debug("WebGLRenderer", "Creating normal buffer...");
-		this.buffers.normal = this.createBuffer();
-		this.gl.bindBuffer(GL.ARRAY_BUFFER, this.buffers.normal);
-		this.gl.bufferData(GL.ARRAY_BUFFER, Cube.normals, GL.STATIC_DRAW);
-
-		// Indices
-		Log.debug("WebGLRenderer", "Creating index buffer...");
-		this.buffers.index = this.createBuffer();
-		this.gl.bindBuffer(GL.ELEMENT_ARRAY_BUFFER, this.buffers.index);
-		this.gl.bufferData(GL.ELEMENT_ARRAY_BUFFER, Cube.indices, GL.STATIC_DRAW);
-
-		// Texture
-		Log.debug("WebGLRenderer", "Creating texture buffer...");
-		this.buffers.texture = this.createBuffer();
-		this.gl.bindBuffer(GL.ARRAY_BUFFER, this.buffers.texture);
-		this.gl.bufferData(GL.ARRAY_BUFFER, Cube.textureCoordinates, GL.STATIC_DRAW);
-	}
-	// #endregion
-
 	// #region Textures
-	private async loadTexture(url: string) {
-		Log.info("WebGLRenderer", `Loading texture: ${url}...`);
-		const image = await ImageUtils.load(url);
-		const texture = this.gl.createTexture();
-		if (!texture) throw new Error("Could not create texture");
+	private setupFrameBuffer() {
+		Log.info("WebGLRenderer", "Setting up frame buffer...");
 
-		this.gl.bindTexture(GL.TEXTURE_2D, texture);
-		this.gl.texImage2D(GL.TEXTURE_2D, 0, GL.RGBA, GL.RGBA, GL.UNSIGNED_BYTE, image);
-		this.gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, GL.NEAREST);
-		this.gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, GL.NEAREST);
-		this.gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_S, GL.CLAMP_TO_EDGE);
-		this.gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_T, GL.CLAMP_TO_EDGE);
+		// this.textures.target = this.gl.createTexture();
+		// if (!this.textures.target) throw new Error("Could not create target texture");
+		// this.gl.bindTexture(GL.TEXTURE_2D, this.textures.target);
+		// this.gl.texImage2D(GL.TEXTURE_2D, 0, GL.RGBA, this.canvas.width, this.canvas.height, 0, GL.RGBA, GL.UNSIGNED_BYTE, null);
+		// this.gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, GL.NEAREST);
+		// this.gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, GL.NEAREST);
+		// this.gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_S, GL.CLAMP_TO_EDGE);
+		// this.gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_T, GL.CLAMP_TO_EDGE);
 
-		return texture;
-	}
+		// const buffer = this.gl.createFramebuffer();
+		// if (!buffer) throw new Error("Could not create frame buffer");
+		// this.frameBuffer = buffer;
+		// this.gl.bindFramebuffer(GL.FRAMEBUFFER, this.frameBuffer);
 
-	private async setupTextures() {
-		Log.info("WebGLRenderer", "Setting up textures...");
-		this.gl.pixelStorei(GL.UNPACK_FLIP_Y_WEBGL, true);
-		this.textures.diffuse = await this.loadTexture("terrain");
+		// this.gl.framebufferTexture2D(GL.FRAMEBUFFER, GL.COLOR_ATTACHMENT0, GL.TEXTURE_2D, this.textures.target, 0);
 	}
 	// #endregion
 
@@ -181,21 +69,83 @@ export class WebGLRenderer {
 		Log.debug("WebGLRenderer", "Creating canvas...");
 		this.canvas = document.createElement("canvas");
 		this.canvas.id = "webgl-canvas";
-		const gl = this.canvas.getContext("webgl2") ?? this.canvas.getContext("webgl") ?? this.canvas.getContext("experimental-webgl");
+		const options: WebGLContextAttributes = { antialias: false };
+		const gl = this.canvas.getContext("webgl2", options) ?? this.canvas.getContext("webgl", options) ?? this.canvas.getContext("experimental-webgl", options);
 		if (!gl) throw new Error("Could not get WebGL context");
 		this.gl = gl as WebGLRenderingContext | WebGL2RenderingContext;
 
 		document.body.appendChild(this.canvas);
 	}
 
+    private async setupShaders() {
+        Log.debug("WebGLRenderer", "Setting up shaders...");
+        this.meshShader = new Shader(this.gl, "mesh");
+		await this.meshShader.setup({
+			source: {
+				vertex: "vertex",
+				fragment: "fragment"
+			},
+            uniforms: ["u_projection", "u_model", "u_view", "u_texture"],
+            buffers: {
+				vertex: {
+					data: Cube.vertices,
+					attribute: "a_position"
+				},
+				uv: {
+					data: Cube.textureCoordinates,
+					attribute: "a_texcoord"
+				},
+				normal: {
+					data: Cube.normals,
+					attribute: "a_normal"
+				},
+                index: {
+					data: Cube.indices,
+					target: GL.ELEMENT_ARRAY_BUFFER,
+				}
+            }
+        });
+
+        this.finalPassShader = new Shader(this.gl, "final");
+		await this.finalPassShader.setup({
+			source: {
+				vertex: "vertex-final",
+				fragment: "fragment-final"
+			},
+            uniforms: ["u_texture"],
+            buffers: {
+				vertex: {
+					data: Quad.vertices,
+					attribute: "a_position"
+				},
+				uv: {
+					data: Quad.textureCoordinates,
+					attribute: "a_texcoord"
+				},
+				index: {
+					data: Quad.indices,
+					target: GL.ELEMENT_ARRAY_BUFFER,
+				}
+            }
+        });
+	}
+
+	private async setupTextures() {
+		Log.debug("WebGLRenderer", "Setting up textures...");
+
+		// Ensure to flip the Y axis of the texture. 'cos WebGL is weird
+		this.gl.pixelStorei(GL.UNPACK_FLIP_Y_WEBGL, true);
+
+		this.textureAtlas = new Texture(this.gl);
+		await this.textureAtlas.load("terrain");
+	}
+
 	async setup() {
 		Log.info("WebGLRenderer", "Setting up...");
 
-		this.setupCanvas();
-		await this.setupShaderProgram();
-		this.setupUniforms();
-		this.setupBuffers();
-		this.setupTextures();
+        this.setupCanvas();
+		await this.setupShaders();
+		await this.setupTextures();
 	}
 	// #endregion
 
@@ -210,36 +160,13 @@ export class WebGLRenderer {
 		return modelMatrix;
 	}
 
-	private bindAttributes() {
-		// Position
-		this.gl.bindBuffer(GL.ARRAY_BUFFER, this.buffers.position);
-		this.gl.vertexAttribPointer(this.locations.attributes.position, 3, GL.FLOAT, false, 0, 0);// 3 floats per vertex
-		this.gl.enableVertexAttribArray(this.locations.attributes.position);
-
-		// Normals (which are an array of 1 32-bit unsigned integer per vertex)
-		this.gl.bindBuffer(GL.ARRAY_BUFFER, this.buffers.normal);
-		this.gl.vertexAttribPointer(this.locations.attributes.normal, 1, GL.FLOAT, false, 0, 0);// 1 float per vertex
-		this.gl.enableVertexAttribArray(this.locations.attributes.normal);
-
-		// Texture
-		this.gl.bindBuffer(GL.ARRAY_BUFFER, this.buffers.texture);
-		this.gl.vertexAttribPointer(this.locations.attributes.textureCoord, 2, GL.FLOAT, false, 0, 0);
-		this.gl.enableVertexAttribArray(this.locations.attributes.textureCoord);
-		this.gl.activeTexture(GL.TEXTURE0);
-		this.gl.bindTexture(GL.TEXTURE_2D, this.textures.diffuse);
-		this.gl.uniform1i(this.locations.uniforms.texture, 0);
+	private bindProjectionMatrix(shader: Shader) {
+		shader.setUniform("u_projection", this.main.camera.getProjectionMatrix(this.main.screen));
+		shader.setUniform("u_view", this.main.camera.getViewMatrix());
+		shader.setUniform("u_model", this.getModelMatrix());
 	}
 
-	private bindProjectionMatrix() {
-		this.gl.uniformMatrix4fv(this.locations.uniforms.projection, false, this.main.camera.getProjectionMatrix(this.main.screen));
-		this.gl.uniformMatrix4fv(this.locations.uniforms.view, false, this.main.camera.getViewMatrix());
-		this.gl.uniformMatrix4fv(this.locations.uniforms.model, false, this.getModelMatrix());
-	}
-
-	public render() {
-		if (!this.isDirty) return;
-		this.isDirty = false;
-
+	private drawScene() {
 		// Scene
 		const color = Color.decode(Theme.background, true);
 		this.gl.clearColor(color.r, color.g, color.b, 1.0);
@@ -251,17 +178,24 @@ export class WebGLRenderer {
 		this.gl.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
 		// Setup
-		this.bindAttributes();
-		this.gl.useProgram(this.shaderProgram);
-		this.bindProjectionMatrix();
+		this.meshShader.bind();
+		this.bindProjectionMatrix(this.meshShader);
 
-		// Draw
-		this.gl.bindBuffer(GL.ELEMENT_ARRAY_BUFFER, this.buffers.index);
+		// Draw the cube
+		this.textureAtlas.bind();
+		this.meshShader.bindBuffer("index", Cube.indices);
 		this.gl.drawElements(GL.TRIANGLES, Cube.indices.length, GL.UNSIGNED_SHORT, 0);
 
 		// Cleanup
 		this.gl.disable(GL.CULL_FACE);
 		this.gl.disable(GL.DEPTH_TEST);
+	}
+
+	public render() {
+		if (!this.isDirty) return;
+		this.isDirty = false;
+
+		this.drawScene();
 	}
 	// #endregion
 
