@@ -20,4 +20,8 @@ void main() {
 	// Flip texture vertically
 	vec2 flippedTexCoord = vec2(v_texCoord.x, 1.0 - v_texCoord.y);
 	fragColor = vec4(color, 1.0) * texture(u_texture, flippedTexCoord);
+
+	// Depth buffer
+	// fragColor = vec4(vec3(gl_FragCoord.z), 1.0);
+
 }
