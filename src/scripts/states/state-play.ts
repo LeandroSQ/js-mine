@@ -48,13 +48,11 @@ export class StatePlay extends AState {
 			this.camera.position[0] += deltaTime * speed;
 		}
 		if (InputHandler.isKeyDown(Key.ArrowUp)) {
-			this.camera.position[1] += deltaTime * speed;
+			this.camera.position[2] += deltaTime * speed;
 		}
 		if (InputHandler.isKeyDown(Key.ArrowDown)) {
-			this.camera.position[1] -= deltaTime * speed;
+			this.camera.position[2] -= deltaTime * speed;
 		}
-
-
 	}
 
 	render(ctx: CanvasRenderingContext2D): void {

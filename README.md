@@ -42,7 +42,7 @@ Did not have much time today, so mainly cleaned up the code, added wrappers for 
 	<img src=".github/screenshots/day1.gif" style="height: 400px; border-radius: 10pt; box-shadow: 0px 5pt 15pt rgba(0, 0, 0, 0.25)"/>
 </p>
 
-<p align="center">Original on the <b>left</b> and new on the <b>right</b></p>
+<p align="center">Original on the <b>left</b> and new on the <b>right</b>.<br><small>GIF above is compressed, colors may not be the same</small></p>
 
 Added some `sharpen`, `brightness`, `contrast` and `saturation`, which works great.
 And also tried to add `FXAA`, but it either introduces too much blur on the textures or does not work at all, not sure if this is apparent on the GIF above.
