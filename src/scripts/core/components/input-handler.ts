@@ -107,6 +107,7 @@ export abstract class InputHandler {
 	public static readonly mouse = Vector2.zero;
 	public static readonly mouseDelta = Vector2.zero;
 	public static readonly mouseButtons: Dictionary<InputState> = {};
+	public static mouseWheelDelta = 0;
 
 	// #region API
 	public static isMouseButtonDown(...buttons: MouseButton[]): boolean {
@@ -196,6 +197,10 @@ export abstract class InputHandler {
 		this.onMouseUp(event);
 	}
 
+	private static onMouseWheel(event: WheelEvent) {
+		this.mouseWheelDelta = event.deltaY;
+	}
+
 	private static updateMouse() {
 		for (const button in this.mouseButtons) {
 			if (!this.mouseButtons.hasOwnProperty(button)) continue;
@@ -209,6 +214,7 @@ export abstract class InputHandler {
 
 		this.mouseDelta.x = 0;
 		this.mouseDelta.y = 0;
+		this.mouseWheelDelta = 0;
 	}
 	// #endregion
 	// #endregion
@@ -373,8 +379,8 @@ export abstract class InputHandler {
 		}
 	}
 
-	public static setup(main: Main) {
-		const element = main.gl.canvas;
+	public static setup() {
+		const element = document.body;
 
 		// Keyboard
 		window.addEventListener("keydown", this.onKeyDown.bind(this));
@@ -387,6 +393,12 @@ export abstract class InputHandler {
 		element.addEventListener("mousemove", this.onMouseMove.bind(this));
 		element.addEventListener("mousedown", this.onMouseDown.bind(this));
 		element.addEventListener("mouseup", this.onMouseUp.bind(this));
+		element.addEventListener("wheel", this.onMouseWheel.bind(this));
+		element.oncontextmenu = (e) => {
+			e.preventDefault();
+			e.stopPropagation();
+			return false;
+		};
 
 		// Pointer
 		element.addEventListener("pointermove", this.onMouseMove.bind(this));
