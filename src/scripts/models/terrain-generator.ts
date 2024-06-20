@@ -1,4 +1,4 @@
-import { mat4 } from "gl-matrix";
+import { mat4, vec3 } from "gl-matrix";
 import { Size } from "../types/size";
 import { Cube, CubeFace } from "./cube";
 import { MeshBuilder } from "./mesh-builder";
@@ -66,7 +66,11 @@ export abstract class TerrainGenerator {
 			for (let y = 0; y < height; y++) {
 				for (let z = 0; z < size; z++) {
 					const cube = list[x + y * size + z * size * height];
-					mat4.translate(cube.matrix, cube.matrix, [x - size / 2, y + 3, z - size]);
+					const pos = vec3.fromValues(x, y, z);
+					vec3.add(pos, pos, [-size / 2, 3, -size]);
+					vec3.scale(pos, pos, 2);
+
+					mat4.translate(cube.matrix, cube.matrix, pos);
 				}
 			}
 		}
