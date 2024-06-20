@@ -9,7 +9,7 @@ export class RenderingPipelineBuffer {
 	private filters: Shader[] = [];
 	private pingPong = false;
 
-	constructor(private gl: WebGLRenderingContext | WebGL2RenderingContext) {
+	constructor(private gl: WebGLContext) {
 		this.frameBuffer0 = new FrameBuffer(this.gl);
 		this.frameBuffer1 = new FrameBuffer(this.gl);
 	}

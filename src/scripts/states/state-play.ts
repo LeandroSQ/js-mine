@@ -5,8 +5,6 @@ import { Cursor } from "../utils/cursor";
 import { CursorType } from "../enums/cursor-type";
 import { InputHandler } from "../core/components/input-handler";
 import { Key } from "../enums/key";
-import { GIFUtils } from "../utils/gif";
-import { MouseButton } from "../enums/mouse-button";
 import { Gizmo } from "../utils/gizmo";
 import { Vector2 } from "../models/vector2";
 import { TextAlign } from "../enums/text-align";
@@ -39,31 +37,6 @@ export class StatePlay extends AState {
 		Log.debug("StatePlay", "Setting up...");
 
 		if (!DEBUG) Cursor.set(CursorType.Hidden);
-	}
-
-	private eulerAnglesToMatrix(yaw: number, pitch: number, roll: number) {
-		const c1 = Math.cos(yaw);
-		const s1 = Math.sin(yaw);
-		const c2 = Math.cos(pitch);
-		const s2 = Math.sin(pitch);
-		const c3 = Math.cos(roll);
-		const s3 = Math.sin(roll);
-
-		const m11 = c1 * c3 + s1 * s2 * s3;
-		const m12 = c2 * s3;
-		const m13 = c1 * s2 * s3 - c3 * s1;
-		const m21 = c3 * s1 * s2 - s3 * c1;
-		const m22 = c2 * c3;
-		const m23 = c1 * c2 * s3 + s1 * s2;
-		const m31 = c2 * s1;
-		const m32 = -s2;
-		const m33 = c1 * c2;
-
-		return [
-			m11, m12, m13,
-			m21, m22, m23,
-			m31, m32, m33
-		];
 	}
 
 	async update(deltaTime: number) {

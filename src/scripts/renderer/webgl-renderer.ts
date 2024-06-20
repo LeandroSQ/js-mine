@@ -1,7 +1,7 @@
 /* eslint-disable max-statements */
 import { mat4, vec3 } from "gl-matrix";
 import { Main } from "../main";
-import { Cube } from "../models/cube";
+import { Cube, CubeFace } from "../models/cube";
 import { Optional } from "../types/optional";
 import { Size } from "../types/size";
 import { Log } from "../utils/log";
@@ -9,20 +9,19 @@ import { Theme } from "../utils/theme";
 import { Color } from "../utils/color";
 import { Shader } from "../models/shader";
 import { Texture } from "../models/texture";
-import { RenderingPipelineBuffer } from "../models/filtering";
+import { RenderingPipelineBuffer } from "../models/rendering-pipeline-buffer";
+import { TerrainGenerator } from "../models/terrain-generator";
 
 export class WebGLRenderer {
 
 	public canvas: HTMLCanvasElement;
-	public gl: WebGLRenderingContext | WebGL2RenderingContext;
-
-	private meshShader: Shader;
-
-	private textureAtlas: Texture;
+	public gl: WebGLContext;
 
 	private isDirty = false;
 
 	private frameBuffer: RenderingPipelineBuffer;
+
+	private cubes: Array<Cube> = [];
 
 	constructor(private main: Main) {  }
 
@@ -52,7 +51,7 @@ export class WebGLRenderer {
 		const options: WebGLContextAttributes = { antialias: true, depth: true };
 		const gl = this.canvas.getContext("webgl2", options) ?? this.canvas.getContext("webgl", options) ?? this.canvas.getContext("experimental-webgl", options);
 		if (!gl) throw new Error("Could not get WebGL context");
-		this.gl = gl as WebGLRenderingContext | WebGL2RenderingContext;
+		this.gl = gl as WebGLContext;
 
 		document.body.appendChild(this.canvas);
 
@@ -67,44 +66,19 @@ export class WebGLRenderer {
 		this.gl.depthMask(false); */
 	}
 
-    private async setupShaders() {
-        Log.debug("WebGLRenderer", "Setting up shaders...");
-        this.meshShader = new Shader(this.gl, "mesh");
-		await this.meshShader.setup({
-			source: {
-				vertex: "vertex",
-				fragment: "fragment"
-			},
-            uniforms: ["u_matrix", "u_texture"],
-            buffers: {
-				vertex: {
-					data: Cube.vertices,
-					attribute: "a_position"
-				},
-				uv: {
-					data: Cube.textureCoordinates,
-					attribute: "a_texcoord"
-				},
-				normal: {
-					data: Cube.normals,
-					attribute: "a_normal"
-				},
-                index: {
-					data: Cube.indices,
-					target: GL.ELEMENT_ARRAY_BUFFER,
-				}
-            }
-		});
-	}
-
 	private async setupTextures() {
 		Log.debug("WebGLRenderer", "Setting up textures...");
 
-		this.textureAtlas = new Texture(this.gl);
-		await this.textureAtlas.load("terrain");
-
 		// Ensure to flip the Y axis of the texture. 'cos WebGL is weird
 		this.gl.pixelStorei(GL.UNPACK_FLIP_Y_WEBGL, true);
+	}
+
+	private async setupMesh() {
+		// this.cube = new Cube(this.gl, CubeFace.GRASS, CubeFace.GRASS_SIDE, CubeFace.DIRT);
+		// this.cube = new Cube(this.gl, CubeFace.DIAMOND_ORE, CubeFace.DIAMOND_ORE, CubeFace.DIAMOND_ORE);
+		// await this.cube.setup();
+
+		this.cubes = await TerrainGenerator.generateCubes(this.gl, 16, 1);
 	}
 
 	async setup() {
@@ -112,7 +86,7 @@ export class WebGLRenderer {
 
 		this.setupCanvas();
 		this.frameBuffer = new RenderingPipelineBuffer(this.gl);
-		await this.setupShaders();
+		await this.setupMesh();
 		await this.setupTextures();
 
 		await this.frameBuffer.addFilter("fxaa");
@@ -153,15 +127,18 @@ export class WebGLRenderer {
 	}
 
 	private drawSingleCube() {
-		this.bindProjectionMatrix(this.meshShader);
+		const projection = this.main.camera.getProjectionMatrix(this.main.screen);
+		const view = this.main.camera.getViewMatrix();
+		this.cubes.forEach(cube => cube.render(projection, view));
+		/* this.bindProjectionMatrix(this.meshShader);
 
 		// Draw the cube
 		this.textureAtlas.bind();
 		this.meshShader.bindBuffer("index", Cube.indices);
-		this.gl.drawElements(GL.TRIANGLES, Cube.indices.length, GL.UNSIGNED_SHORT, 0);
+		this.gl.drawElements(GL.TRIANGLES, Cube.indices.length, GL.UNSIGNED_SHORT, 0); */
 	}
 
-	private drawMultipleCubes() {
+	/* private drawMultipleCubes() {
 		// Combine all matrixes on the CPU
 		const projection = this.main.camera.getProjectionMatrix(this.main.screen);
 		const view = this.main.camera.getViewMatrix();
@@ -194,7 +171,7 @@ export class WebGLRenderer {
 				}
 			}
 		}
-	}
+	} */
 
 	private drawScene() {
 		// Scene
@@ -202,9 +179,8 @@ export class WebGLRenderer {
 		this.clear(color);
 
 		// Setup
-		this.meshShader.bind();
-
-		this.drawMultipleCubes();
+		this.drawSingleCube();
+		// this.drawMultipleCubes();
 	}
 
 	public render() {
