@@ -4,8 +4,8 @@ WebGL minecraft-like concept.
 
 <!-- <center>
     <p float="left" align="center">
-		<img src=".github/screenshots/day0.svg" style="width: 48%"/>
-        <img src=".github/screenshots/day0.gif" style="width: 48%"/>
+		<img loading="lazy" src=".github/screenshots/day0.svg" style="width: 48%"/>
+        <img loading="lazy" src=".github/screenshots/day0.gif" style="width: 48%"/>
     </p>
 </center> -->
 
@@ -20,7 +20,7 @@ WebGL minecraft-like concept.
 After playing a little bit with `WebGL 2.0` this is what I came up with:
 
 <p align="center">
-	<img src=".github/screenshots/day0.gif" style="height: 400px; border-radius: 10pt; box-shadow: 0px 5pt 15pt rgba(0, 0, 0, 0.25)"/>
+	<img loading="lazy" src=".github/screenshots/day0.gif" style="height: 400px; border-radius: 10pt; box-shadow: 0px 5pt 15pt rgba(0, 0, 0, 0.25)"/>
 </p>
 
 <p align="center">Some really cool looking cube, <br>where each face is being colored by their normal.</p>
@@ -29,7 +29,7 @@ I think I spent more time coming up with the `GIF` above than actually coding th
 
 Not long after that I introduced textures and a simple lighting system:
 <p align="center">
-	<img src=".github/screenshots/day0-1.gif" style="height: 400px; border-radius: 10pt; box-shadow: 0px 5pt 15pt rgba(0, 0, 0, 0.25)"/>
+	<img loading="lazy" src=".github/screenshots/day0-1.gif" style="height: 400px; border-radius: 10pt; box-shadow: 0px 5pt 15pt rgba(0, 0, 0, 0.25)"/>
 </p>
 
 <p align="center">Now we talking</p>
@@ -40,14 +40,14 @@ Did not have much time today, so mainly cleaned up the code, added wrappers for 
 
 Added `FXAA`, but it either introduces too much blur on the textures or does not work at all, not sure if this is apparent on the `GIF` below.
 <p align="center">
-	<img src=".github/screenshots/day1-1.png" style="width: 200px; border-radius: 10pt; box-shadow: 0px 5pt 15pt rgba(0, 0, 0, 0.25)"/>
+	<img loading="lazy" src=".github/screenshots/day1-1.png" style="width: 200px; border-radius: 10pt; box-shadow: 0px 5pt 15pt rgba(0, 0, 0, 0.25)"/>
 </p>
 <p align="center"><small>Some FXAA artifacts</small></p>
 
 Added some `sharpen`, `brightness`, `contrast` and `saturation`, which works great.
 
 <p align="center">
-	<img src=".github/screenshots/day1.gif" style="height: 400px; border-radius: 10pt; box-shadow: 0px 5pt 15pt rgba(0, 0, 0, 0.25)"/>
+	<img loading="lazy" src=".github/screenshots/day1.gif" style="height: 400px; border-radius: 10pt; box-shadow: 0px 5pt 15pt rgba(0, 0, 0, 0.25)"/>
 </p>
 
 <p align="center">Original on the <b>left</b> and new on the <b>right</b>.<br><small>GIF above is compressed, colors may not be the same</small></p>
@@ -61,7 +61,7 @@ Spent the day refactoring the code, which makes creating meshes, shaders and buf
 Also, why not, I moved the recording logic to a worker, first time I used an `OffscreenCanvas`... they are really powerful. Maybe I will use it for the rendering pipeline in the future, imagine the possibilities — rendering everything in a worker, no hiccups on the main thread.
 
 <p align="center">
-	<img src=".github/screenshots/day2.gif" style="height: 400px; border-radius: 10pt; box-shadow: 0px 5pt 15pt rgba(0, 0, 0, 0.25)"/>
+	<img loading="lazy" src=".github/screenshots/day2.gif" style="height: 400px; border-radius: 10pt; box-shadow: 0px 5pt 15pt rgba(0, 0, 0, 0.25)"/>
 </p>
 
 <p align="center"><small>Some smooth <s>not really</s> camera controls</small></p>
