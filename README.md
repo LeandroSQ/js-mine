@@ -38,16 +38,35 @@ Not long after that I introduced textures and a simple lighting system:
 
 Did not have much time today, so mainly cleaned up the code, added wrappers for `WebGL` boilerplate which made life easier and also played with some post-processing effects.
 
+Added `FXAA`, but it either introduces too much blur on the textures or does not work at all, not sure if this is apparent on the `GIF` below.
+<p align="center">
+	<img src=".github/screenshots/day1-1.png" style="width: 200px; border-radius: 10pt; box-shadow: 0px 5pt 15pt rgba(0, 0, 0, 0.25)"/>
+</p>
+<p align="center"><small>Some FXAA artifacts</small></p>
+
+Added some `sharpen`, `brightness`, `contrast` and `saturation`, which works great.
+
 <p align="center">
 	<img src=".github/screenshots/day1.gif" style="height: 400px; border-radius: 10pt; box-shadow: 0px 5pt 15pt rgba(0, 0, 0, 0.25)"/>
 </p>
 
 <p align="center">Original on the <b>left</b> and new on the <b>right</b>.<br><small>GIF above is compressed, colors may not be the same</small></p>
 
-Added some `sharpen`, `brightness`, `contrast` and `saturation`, which works great.
-And also tried to add `FXAA`, but it either introduces too much blur on the textures or does not work at all, not sure if this is apparent on the GIF above.
 But mostly important, the rendering pipeline now supports frame buffers and drawing to textures with multi-pass filtering, all done with my wrappers which makes me happy.
 
+### Day 2
+
+The boilerplate is gone!
+Spent the day refactoring the code, which makes creating meshes, shaders and buffers a breeze.
+Also, why not, I moved the recording logic to a worker, first time I used an `OffscreenCanvas`... they are really powerful. Maybe I will use it for the rendering pipeline in the future, imagine the possibilities — rendering everything in a worker, no hiccups on the main thread.
+
+<p align="center">
+	<img src=".github/screenshots/day2.gif" style="height: 400px; border-radius: 10pt; box-shadow: 0px 5pt 15pt rgba(0, 0, 0, 0.25)"/>
+</p>
+
+<p align="center"><small>Some smooth <s>not really</s> camera controls</small></p>
+
+Also, since the mesh system is organized, creating a bunch of cubes is easy, I'm not using instanced rendering yet, and to be honest I won't, since the goal of the project is to generate a single mesh for the world, and not a mesh for each block. Nevertheless, this helps to visualize the goal.
 
 ## Used in this project
 
