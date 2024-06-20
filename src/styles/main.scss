@@ -6,6 +6,8 @@
 	box-sizing: border-box;
 	backface-visibility: hidden;
 
+	user-select: none;
+
 	-webkit-tap-highlight-color: transparent;
 	-webkit-touch-callout: none;
 	// user-select: none;
@@ -47,4 +49,5 @@ canvas {
 	height: -webkit-fill-available;
 	animation: animate-fade-in 1s ease-in-out forwards;
 	z-index: 2;
+	pointer-events: none;
 }
