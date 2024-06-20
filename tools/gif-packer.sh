@@ -24,3 +24,5 @@ fi
 # 	$OUTPUT_DIR/output.gif
 
 gifski -o $OUTPUT_DIR/output.gif $INPUT_DIR/*.png
+# Low quality
+# gifski -o anim.gif ~/Downloads/frames/*.png --quality=80 --motion-quality=70 --lossy-quality=80 --width 400 --height 400 --fps 24 --fast-forward 2

@@ -64,7 +64,7 @@ Also, why not, I moved the recording logic to a worker, first time I used an `Of
 	<img loading="lazy" src=".github/screenshots/day2.gif" style="height: 400px; border-radius: 10pt; box-shadow: 0px 5pt 15pt rgba(0, 0, 0, 0.25)"/>
 </p>
 
-<p align="center"><small>Some smooth <s>not really</s> camera controls</small></p>
+<p align="center"><small>Some smooth <s>not really</s> camera controls</small><br>*This GIF is heavily compressed</p>
 
 Also, since the mesh system is organized, creating a bunch of cubes is easy, I'm not using instanced rendering yet, and to be honest I won't, since the goal of the project is to generate a single mesh for the world, and not a mesh for each block. Nevertheless, this helps to visualize the goal.
 
