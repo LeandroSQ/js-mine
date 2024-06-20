@@ -7,7 +7,7 @@ export class FrameBuffer {
 	private depthBuffer: WebGLRenderbuffer;
 	private frameBuffer: WebGLFramebuffer;
 
-	constructor(private gl: WebGLRenderingContext | WebGL2RenderingContext) {
+	constructor(private gl: WebGLContext) {
 		this.setup();
 	}
 

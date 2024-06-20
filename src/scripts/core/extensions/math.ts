@@ -64,3 +64,11 @@ Math.prettifyElapsedTime = function (ms) {
 	if (ms < 3600000) return `${toFixed((ms / 60000), 2)}m`;
 	else return `${toFixed((ms / 3600000), 2)}h`;
 };
+
+Math.toDegrees = function (radians) {
+	return radians * (180 / Math.PI);
+};
+
+Math.toRadians = function (degrees) {
+	return degrees * (Math.PI / 180);
+};

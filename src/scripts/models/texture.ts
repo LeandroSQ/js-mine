@@ -6,7 +6,7 @@ export class Texture {
 
 	private texture: Optional<WebGLTexture> = null;
 
-	constructor(private gl: WebGLRenderingContext | WebGL2RenderingContext) { }
+	constructor(private gl: WebGLContext) { }
 
 	async load(url: string, nearestNeighborFiltering = true) {
 		// Load image

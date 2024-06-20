@@ -14,6 +14,7 @@ declare global {
 
 	interface String {
 		toCamelCase: () => string;
+		insertAt(index: number, value: string): string;
 	}
 
 	interface Array<T> {
@@ -30,6 +31,8 @@ declare global {
 		oscilate: (time: number, cyclesPerSecond: number, minAmplitude?: number, maxAmplitude?: number) => number;
 		smoothstep: (x: number, min?: number, max?: number) => number;
 		prettifyElapsedTime: (millis: number) => string;
+		toDegrees: (radians: number) => number;
+		toRadians: (degrees: number) => number;
 	}
 
 	interface CanvasRenderingContext2D {
@@ -52,6 +55,8 @@ declare global {
 	const DEBUG: boolean;
 
 	let GL: typeof WebGLRenderingContext | typeof WebGL2RenderingContext;
+
+	declare type WebGLContext = WebGLRenderingContext | WebGL2RenderingContext;
 
 }
 
