@@ -69,18 +69,21 @@ vec3 fxaa(vec2 texelSize, vec2 v_texcoord, sampler2D u_texture) {
 void main() {
 	vec2 texelSize = 1.0 / vec2(textureSize(u_texture, 0));
 
-	// Vertical line
-	if (v_texcoord.x > 0.5 - texelSize.x && v_texcoord.x < 0.5 + texelSize.x) {
-		fragColor = vec4(1.0);
-		return;
-	}
+	#ifdef SPLIT
+		// Vertical line
+		if (v_texcoord.x > 0.5 - texelSize.x && v_texcoord.x < 0.5 + texelSize.x) {
+			fragColor = vec4(1.0);
+			return;
+		}
 
-	if (v_texcoord.x > 0.5) {
-		vec3 color = fxaa(texelSize, v_texcoord, u_texture);
-		fragColor = vec4(mix(fragColor.rgb, color, FXAA_MIX), 1.0);
-	} else {
-		fragColor = texture(u_texture, v_texcoord);
-	}
+		// No effect on left side
+		if (v_texcoord.x < 0.5) {
+			fragColor = texture(u_texture, v_texcoord);
+			return;
+		}
+	#endif
 
+	vec3 color = fxaa(texelSize, v_texcoord, u_texture);
+	fragColor = vec4(mix(fragColor.rgb, color, FXAA_MIX), 1.0);
 
 }

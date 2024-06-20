@@ -26,10 +26,14 @@ vec4 sharpen() {
 }
 
 void main() {
-	if (v_texcoord.x > 0.5) {
-		vec4 sharpened = sharpen();
-		fragColor = mix(texture(u_texture, v_texcoord), sharpened, SHARPEN_AMOUNT);
-	} else {
-		fragColor = texture(u_texture, v_texcoord);
-	}
+	#ifdef SPLIT
+		// No effect on the left side
+		if (v_texcoord.x < 0.5) {
+			fragColor = texture(u_texture, v_texcoord);
+			return;
+		}
+	#endif
+
+	vec4 sharpened = sharpen();
+	fragColor = mix(texture(u_texture, v_texcoord), sharpened, SHARPEN_AMOUNT);
 }

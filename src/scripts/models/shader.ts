@@ -45,6 +45,10 @@ export type ShaderOptions = {
  */
 export class Shader {
 
+	private static SPLIT = false;
+
+	private static readonly cache = new Map<string, WebGLShader>();
+
 	private program: Optional<WebGLProgram> = null;
 
 	private buffers: Dictionary<ShaderBuffer> = {};
@@ -53,9 +57,20 @@ export class Shader {
 
 	constructor(private gl: WebGLRenderingContext, private name: string) { }
 
+	private preprocessShader(source: string): string {
+		let begin = source.indexOf("#version");
+		begin = source.indexOf("\n", begin) + 1;
+
+		if (Shader.SPLIT) source = source.insertAt(begin, "\n#define SPLIT\n")
+
+		return source;
+	}
+
 	private async loadShader(type: number, url: string) {
 		Log.info(`Shader-${this.name}`, `Loading shader: ${url}...`);
-		const source = await FileUtils.load(`shaders/${url}.glsl`);
+		if (Shader.cache.has(url)) return Shader.cache.get(url);
+
+		const source = this.preprocessShader(await FileUtils.load(`shaders/${url}.glsl`));
 		const shader = this.gl.createShader(type);
 		if (!shader) throw new Error("Could not create shader");
 
@@ -67,6 +82,8 @@ export class Shader {
 			this.gl.deleteShader(shader);
 			throw new Error(`Could not compile '${url}' for shader '${this.name}': ${info}`);
 		}
+
+		Shader.cache.set(url, shader);
 
 		return shader;
 	}

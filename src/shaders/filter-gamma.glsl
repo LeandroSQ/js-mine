@@ -24,14 +24,18 @@ vec3 applySaturation(vec3 color, float saturation) {
 }
 
 void main() {
-	if (v_texcoord.x > 0.5) {
-		vec3 color = texture(u_texture, v_texcoord).rgb;
-		vec3 color2 = applyContrast(color, 1.1);
-		color2 = applyBrightness(color2, 0.025);
-		color2 = applySaturation(color2, 1.15);
+	#ifdef SPLIT
+		// No effect on the left side
+		if (v_texcoord.x < 0.5) {
+			fragColor = texture(u_texture, v_texcoord);
+			return;
+		}
+	#endif
 
-		fragColor = vec4(mix(color, color2, MIX_AMOUNT), 1.0);
-	} else {
-		fragColor = texture(u_texture, v_texcoord);
-	}
+	vec3 color = texture(u_texture, v_texcoord).rgb;
+	vec3 color2 = applyContrast(color, 1.1);
+	color2 = applyBrightness(color2, 0.025);
+	color2 = applySaturation(color2, 1.15);
+
+	fragColor = vec4(mix(color, color2, MIX_AMOUNT), 1.0);
 }
