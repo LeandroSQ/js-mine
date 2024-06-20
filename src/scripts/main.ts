@@ -7,7 +7,7 @@ import { AState } from "./types/state";
 import { Gizmo } from "./utils/gizmo";
 import { Cursor } from "./utils/cursor";
 import { Theme } from "./utils/theme";
-import { MARGIN, RECORDING_FRAME_RATE, RECORDING_VIEWPORT, SIMULATION_FREQUENCY, SIMULATION_SUBSTEPS, USE_ANIMATION_FRAME } from "./constants";
+import { RECORDING_FRAME_RATE, RECORDING_VIEWPORT, SIMULATION_FREQUENCY, SIMULATION_SUBSTEPS, USE_ANIMATION_FRAME } from "./constants";
 import { FontUtils } from "./utils/font";
 import { StatePlay } from "./states/state-play";
 import { GUIRenderer } from "./renderer/gui-renderer";
@@ -16,6 +16,7 @@ import { WebGLRenderer } from "./renderer/webgl-renderer";
 import { Camera } from "./models/camera";
 import { Key } from "./enums/key";
 import { GIFUtils } from "./utils/gif";
+import { Vector2 } from "./models/vector2";
 
 export class Main {
 
@@ -69,7 +70,7 @@ export class Main {
 			const modules = [
 				Theme.setup(),
 				FontUtils.setup(),
-				InputHandler.setup(this)
+				InputHandler.setup()
 			];
 
 			// Analytics profiler, only on DEBUG
@@ -164,24 +165,36 @@ export class Main {
 
 	private updateRecording(deltaTime: number) {
 		if (this.isRecording) {
-			this.recordingTimer += deltaTime;
-			if (this.recordingTimer >= 5.0) {
-				this.recordingTimer = 1.0;
-				this.isRecording = false;
-				Log.info("Main", "Recording stopped");
-				GIFUtils.generate("recording");
-				this.onResize();
-			}
-		} else if (InputHandler.isKeyJustPressed(Key.Space)) {
-			Log.info("Main", "Recording started");
-			this.isRecording = true;
-
-			// Resize canvas
-			this.screen = RECORDING_VIEWPORT;
-			this.gui.setSize(this.screen);
-			this.gl.setSize(this.screen);
-			this.invalidate();
+			Gizmo.circle(new Vector2(this.screen.width - 30, 30), 10, "red", true);
+			Gizmo.circle(new Vector2(this.screen.width - 30, 30), 15, "red", false);
 		}
+
+		if (InputHandler.isKeyJustReleased(Key.Space)) {
+			if (this.isRecording) {
+				this.onStopRecording();
+			} else {
+				this.onStartRecording();
+			}
+		}
+	}
+
+	private onStartRecording() {
+		Log.info("Main", "Recording started");
+		this.isRecording = true;
+
+		// Resize canvas
+		this.screen = RECORDING_VIEWPORT;
+		this.gui.setSize(this.screen);
+		this.gl.setSize(this.screen);
+		this.invalidate();
+	}
+
+	private onStopRecording() {
+		Log.info("Main", "Recording stopped");
+		this.isRecording = false;
+
+		GIFUtils.generate("recording");
+		this.onResize();
 	}
 
 	private update(newTime: DOMHighResTimeStamp) {
@@ -211,14 +224,15 @@ export class Main {
 		this.gui.render();
 		this.state.render(this.gui.context);
 		if (DEBUG) this.analytics.render(this.gui.context);
-		Gizmo.render(this.gui.context);
-		Gizmo.clear();
 		if (DEBUG) this.analytics.endFrame();
 
 		// GL
 		this.gl.render();
 
 		if (this.isRecording) GIFUtils.addFrame(this.gl.canvas, this.gui.canvas.element);
+
+		Gizmo.render(this.gui.context);
+		Gizmo.clear();
 
 		this.requestNextFrame();
 	}

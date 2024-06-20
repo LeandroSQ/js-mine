@@ -1,40 +1,37 @@
-import JSZip from "jszip";
 import * as FileSaver from "filesaver.js";
+import { Log } from "./log";
+
+// Not pretty to have code as this outside of a class,
+// But even uglier is to have a GIF logic that hangs the main thread everytime
+const worker = new Worker(`${window.location.href}scripts/jobs/gif.worker.js`);
+worker.onerror = (e) => Log.error("GIFUtils", "Worker error", e.message);
+worker.onmessageerror = (e) => Log.error("GIFUtils", "Worker message error", e.data);
+worker.onmessage = (e) => {
+	Log.info("GIFUtils", "Received message", e.data);
+	FileSaver.saveAs(e.data, `recording.zip`);
+};
+
+const canvas = new OffscreenCanvas(1, 1);
+const context = canvas.getContext("2d") as OffscreenCanvasRenderingContext2D;
+if (!context) throw new Error("Could not get context of canvas");
 
 export abstract class GIFUtils {
 
-	private static frames: HTMLCanvasElement[] = [];
-
 	public static addFrame(source: HTMLCanvasElement, overlay: HTMLCanvasElement) {
-		const canvas = document.createElement("canvas");
 		canvas.width = source.width;
 		canvas.height = source.height;
-
-		const context = canvas.getContext("2d");
-		if (!context) throw new Error("Could not get context of canvas");
 
 		context.drawImage(source, 0, 0);
 		context.drawImage(overlay, 0, 0);
 
-		this.frames.push(canvas);
+		const data = canvas.transferToImageBitmap();
+
+		// Send a message to the worker with the key "add" and the canvas as the value
+		worker.postMessage({ key: "add", value: data }, [data]);
 	}
 
 	public static async generate(filename: string) {
-		const zip = new JSZip();
-		const folder = zip.folder("frames");
-
-		const promises = this.frames.map(async (frame, index) => {
-			const blob = await new Promise<Blob>((resolve) => {
-				frame.toBlob((blob) => resolve(blob as Blob));
-			});
-			folder?.file(`${index}.png`, blob);
-		});
-		await Promise.all(promises);
-
-		this.frames = [];
-
-		const content = await zip.generateAsync({ type: "blob" });
-		FileSaver.saveAs(content, `${filename}.zip`);
+		worker.postMessage({ key: "zip" });
 	}
 
 }

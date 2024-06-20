@@ -50,7 +50,6 @@ const browserSyncOptions = {
 };
 
 const esbuildOptions = {
-	outfile: "bundle.js",
 	bundle: true,
 	sourcemap: isProduction ? undefined : "both",
 	target: [
@@ -61,6 +60,7 @@ const esbuildOptions = {
 		"node12",
 		"safari11"
 	],
+	outdir: "./",
 	platform: "browser",
 	minify: shouldMinify,
 	minifyWhitespace: shouldMinify,
@@ -106,7 +106,7 @@ function watchHtml() {
 }
 
 function handleTs() {
-	return src("./src/scripts/main.ts")
+	return src(["./src/scripts/main.ts", "./src/scripts/jobs/gif.worker.ts"])
 		.pipe(gulpEsbuild(esbuildOptions))
 		.pipe(dest("./dist/scripts"))
 		.pipe(reloadBrowsers());
