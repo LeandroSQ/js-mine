@@ -1,6 +1,11 @@
 import { Vector2 } from "../models/vector2";
 import { Rectangle } from "../models/rectangle";
 import { Color } from "./color";
+import { GamepadInputState } from "../types/input-state";
+import { Dictionary } from "../types/dictionary";
+import { GamepadAxis } from "../enums/gamepad-axis";
+import { GamepadButton } from "../enums/gamepad-button";
+import { TextAlign } from "../enums/text-align";
 
 interface IGizmo {
 
@@ -132,6 +137,245 @@ class VectorGizmo implements IGizmo {
 
 }
 
+class GamepadGizmo implements IGizmo {
+
+	private static readonly scale = 1.0;
+	private static readonly width = 200 * GamepadGizmo.scale;
+	private static readonly height = 100 * GamepadGizmo.scale;
+	private static readonly color = "rgba(52, 73, 94, 0.5)"//"rgba(255, 255, 255, 0.1)" as const;
+	private static readonly buttonColor = "rgba(255, 255, 255, 0.5)" as const;
+	private static readonly activeColor = "rgba(52, 152, 219, 0.85)";
+	private static readonly textColor = "rgba(255, 255, 255, 0.75)";
+	private static readonly outerRadius = 20 * GamepadGizmo.scale;
+	private static readonly innerRadius = 10 * GamepadGizmo.scale;
+	private static readonly buttonSize = 10 * GamepadGizmo.scale;
+
+	constructor(
+		private position: Vector2,
+		private buttons: Dictionary<GamepadInputState>,
+		private axes: Dictionary<number>
+	) {
+		// Center the gamepad
+		this.position = this.position.subtract(new Vector2(GamepadGizmo.width / 2, GamepadGizmo.height / 2));
+
+	}
+
+	private getColor(button: GamepadButton): string {
+		return this.buttons[button].active ? GamepadGizmo.activeColor : GamepadGizmo.buttonColor;
+	}
+
+	private getTextColor(button: GamepadButton): string {
+		return this.buttons[button].active ? GamepadGizmo.textColor : GamepadGizmo.color;
+	}
+
+	private renderAnalogStick(ctx: CanvasRenderingContext2D, offset: Vector2, button: GamepadButton, axisX: GamepadAxis, axisY: GamepadAxis) {
+		const radius = GamepadGizmo.outerRadius;
+
+		// Outer
+		ctx.fillStyle = GamepadGizmo.color;
+		ctx.fillCircle(offset.x, offset.y, radius);
+
+		// Inner
+		ctx.fillStyle = this.getColor(button);
+		ctx.fillCircle(offset.x + this.axes[axisX] * radius, offset.y + this.axes[axisY] * radius, GamepadGizmo.innerRadius);
+	}
+
+	private renderDpad(ctx: CanvasRenderingContext2D, offset: Vector2) {
+		const radius = GamepadGizmo.buttonSize;
+
+		// Background
+		ctx.fillStyle = GamepadGizmo.color;
+		ctx.fillCircle(offset.x + radius, offset.y + radius / 2, radius * 2);
+
+		// Left
+		ctx.fillStyle = this.getColor(GamepadButton.Left);
+		ctx.beginPath();
+		ctx.roundRect(offset.x - radius / 2, offset.y, radius, radius, [radius / 4, 0, 0, radius / 4]);
+		ctx.fill();
+
+		// Right
+		ctx.fillStyle = this.getColor(GamepadButton.Right);
+		ctx.beginPath();
+		ctx.roundRect(offset.x + radius * 1.5, offset.y, radius, radius, [0, radius / 4, radius / 4, 0]);
+		ctx.fill();
+
+		// Up
+		ctx.fillStyle = this.getColor(GamepadButton.Up);
+		ctx.beginPath();
+		ctx.roundRect(offset.x + radius / 2, offset.y - radius, radius, radius, [radius / 4, radius / 4, 0, 0]);
+		ctx.fill();
+
+		// Down
+		ctx.fillStyle = this.getColor(GamepadButton.Down);
+		ctx.beginPath();
+		ctx.roundRect(offset.x + radius / 2, offset.y + radius, radius, radius, [0, 0, radius / 4, radius / 4]);
+		ctx.fill();
+
+		// Center
+		ctx.fillStyle = GamepadGizmo.buttonColor;
+		ctx.fillRect(offset.x + radius / 2, offset.y, radius, radius);
+	}
+
+	private renderButtons(ctx: CanvasRenderingContext2D, offset: Vector2) {
+		const radius = GamepadGizmo.buttonSize * 1.25;
+
+		ctx.font = `${radius / 2}px Arial`;
+
+		// Background
+		ctx.fillStyle = GamepadGizmo.color;
+		ctx.fillCircle(offset.x - radius, offset.y + radius / 2, radius * 1.75);
+
+		// Y - top
+		ctx.fillStyle = this.getColor(GamepadButton.Y);
+		ctx.fillCircle(offset.x - radius, offset.y - radius / 2, radius / 2);
+		ctx.fillStyle = this.getTextColor(GamepadButton.Y);
+		ctx.fillTextAligned("Y", offset.x - radius, offset.y - radius * 0.75, TextAlign.Center);
+
+		 // X - left
+		ctx.fillStyle = this.getColor(GamepadButton.X);
+		ctx.fillCircle(offset.x - radius * 2, offset.y + radius / 2, radius / 2);
+		ctx.fillStyle = this.getTextColor(GamepadButton.X);
+		ctx.fillTextAligned("X", offset.x - radius * 2, offset.y + radius * 0.25, TextAlign.Center);
+
+		// A - bottom
+		ctx.fillStyle = this.getColor(GamepadButton.A);
+		ctx.fillCircle(offset.x - radius, offset.y + radius * 1.5, radius / 2);
+		ctx.fillStyle = this.getTextColor(GamepadButton.A);
+		ctx.fillTextAligned("A", offset.x - radius, offset.y + radius * 1.25, TextAlign.Center);
+
+		// B - right
+		ctx.fillStyle = this.getColor(GamepadButton.B);
+		ctx.fillCircle(offset.x, offset.y + radius / 2, radius / 2);
+		ctx.fillStyle = this.getTextColor(GamepadButton.B);
+		ctx.fillTextAligned("B", offset.x, offset.y + radius * 0.25, TextAlign.Center);
+	}
+
+	private renderBumpersAndTriggers(ctx: CanvasRenderingContext2D, offset: Vector2, bumper: GamepadButton, trigger: GamepadButton) {
+		const radius = GamepadGizmo.buttonSize;
+
+		// Bumper
+		ctx.fillStyle = this.getColor(bumper);
+		ctx.beginPath();
+		ctx.roundRect(offset.x, offset.y - radius / 1.5, radius * 3, radius / 1.5, [radius / 4, radius / 4, 0, 0]);
+		ctx.fill();
+		/* ctx.fillStyle = GamepadGizmo.textColor;
+		ctx.fillTextAligned(bumper === GamepadButton.LB ? "LB" : "RB", offset.x + radius * 1.5, offset.y - radius * 0.5, TextAlign.Center); */
+
+		// Trigger
+		let value = Math.abs(this.buttons[trigger].value ?? 0);
+		ctx.fillStyle = Color.mix(GamepadGizmo.color, GamepadGizmo.activeColor, value);
+		value = 1.0 - value * 0.75;
+		ctx.beginPath();
+		ctx.roundRect(offset.x + radius / 1.5, offset.y - 2.5 - radius / 2 - (radius * value), radius * 1.5, radius * 1 * value, [radius / 4, radius / 4, 0, 0]);
+		ctx.fill();
+		/* ctx.fillStyle = GamepadGizmo.textColor;
+		ctx.fillTextAligned(trigger === GamepadButton.LT ? "LT" : "RT", offset.x + radius * 1.5, offset.y - 2.5 - radius * 1.25, TextAlign.Center); */
+	}
+
+	private renderExtraButtons(ctx: CanvasRenderingContext2D, offset: Vector2) {
+		const radius = GamepadGizmo.buttonSize;
+
+		// Start
+		ctx.fillStyle = this.getColor(GamepadButton.Back);
+		ctx.fillCircle(offset.x - radius * 2, offset.y - radius / 2, radius / 2);
+
+		// Select
+		ctx.fillStyle = this.getColor(GamepadButton.Home);
+		ctx.fillCircle(offset.x, offset.y, radius / 2);
+
+		// Home
+		ctx.fillStyle = this.getColor(GamepadButton.Start);
+		ctx.fillCircle(offset.x + radius * 2, offset.y - radius / 2, radius / 2);
+	}
+
+	private renderBackground(ctx: CanvasRenderingContext2D) {
+		ctx.fillStyle = GamepadGizmo.color;
+		ctx.beginPath();
+
+		// Main body
+		ctx.roundRect(this.position.x, this.position.y, GamepadGizmo.width, GamepadGizmo.height - GamepadGizmo.outerRadius / 2.5, [GamepadGizmo.outerRadius, GamepadGizmo.outerRadius, 0]);
+
+		// Left handle
+		ctx.save();
+		const w = GamepadGizmo.outerRadius * 3;
+		const h = GamepadGizmo.outerRadius * 4;
+		let posX = this.position.x;
+		let posY = this.position.y + GamepadGizmo.height - GamepadGizmo.outerRadius * 3;
+		ctx.roundRect(posX, posY, w, h, [GamepadGizmo.outerRadius * 2, 0, GamepadGizmo.outerRadius * 8, GamepadGizmo.outerRadius * 8]);
+		ctx.restore();
+
+		// Right handle
+		ctx.save();
+		posX = this.position.x + GamepadGizmo.width - w;
+		posY = this.position.y + GamepadGizmo.height - GamepadGizmo.outerRadius * 3;
+		ctx.roundRect(posX, posY, w, h, [0, GamepadGizmo.outerRadius * 2, GamepadGizmo.outerRadius * 8, GamepadGizmo.outerRadius * 8]);
+		ctx.restore();
+
+		ctx.fill();
+	}
+
+	render(ctx: CanvasRenderingContext2D) {
+		// Background
+		this.renderBackground(ctx);
+
+		this.renderAnalogStick(
+			ctx,
+			new Vector2(
+				this.position.x + GamepadGizmo.width / 3,
+				this.position.y + GamepadGizmo.height - GamepadGizmo.outerRadius - GamepadGizmo.buttonSize
+			),
+			GamepadButton.LS,
+			GamepadAxis.LeftStickX,
+			GamepadAxis.LeftStickY
+		);
+		this.renderAnalogStick(
+			ctx,
+			new Vector2(
+				this.position.x + GamepadGizmo.width - GamepadGizmo.width / 3,
+				this.position.y + GamepadGizmo.height - GamepadGizmo.outerRadius - GamepadGizmo.buttonSize
+			),
+			GamepadButton.RS,
+			GamepadAxis.RightStickX,
+			GamepadAxis.RightStickY
+		);
+		this.renderDpad(
+			ctx,
+			new Vector2(this.position.x + GamepadGizmo.buttonSize * 2, this.position.y + GamepadGizmo.buttonSize * 2.5)
+		);
+		this.renderButtons(
+			ctx,
+			new Vector2(this.position.x + GamepadGizmo.width - GamepadGizmo.buttonSize * 2, this.position.y + GamepadGizmo.buttonSize * 2.5)
+		);
+
+		this.renderBumpersAndTriggers(
+			ctx,
+			new Vector2(
+				this.position.x + GamepadGizmo.outerRadius,
+				this.position.y
+			),
+			GamepadButton.LB,
+			GamepadButton.LT
+		);
+		this.renderBumpersAndTriggers(
+			ctx,
+			new Vector2(
+				this.position.x + GamepadGizmo.width - GamepadGizmo.outerRadius - GamepadGizmo.buttonSize * 3,
+				this.position.y
+			),
+			GamepadButton.RB,
+			GamepadButton.RT
+		);
+		this.renderExtraButtons(
+			ctx,
+			new Vector2(
+				this.position.x + GamepadGizmo.width / 2,
+				this.position.y + GamepadGizmo.height / 2 - GamepadGizmo.buttonSize * 2
+			)
+		);
+	}
+
+}
+
 export class Gizmo {
 
 	static list: IGizmo[] = [];
@@ -184,6 +428,12 @@ export class Gizmo {
 		if (!DEBUG) return;
 
 		Gizmo.list.push(new VectorGizmo(origin, vector, color));
+	}
+
+	static gamepad(position: Vector2, buttons: Dictionary<GamepadInputState>, axes: Dictionary<number>) {
+		if (!DEBUG) return;
+
+		Gizmo.list.push(new GamepadGizmo(position, buttons, axes));
 	}
 
 }

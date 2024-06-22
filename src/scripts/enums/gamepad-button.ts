@@ -15,6 +15,7 @@ export enum GamepadButton {
 	// Extra buttons
 	Back = 8,
 	Start = 9,
+	Home = 16,
 
 	// Joysticks
 	LS = 10,
@@ -27,7 +28,6 @@ export enum GamepadButton {
 	Right = 15,
 
 	// Vendor-specific buttons
-	UNUSED_0 = 16,
 	UNUSED_1 = 17,
 	UNUSED_2 = 18,
 	UNUSED_3 = 19,

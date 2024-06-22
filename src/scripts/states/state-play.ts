@@ -45,41 +45,25 @@ export class StatePlay extends AState {
 		const rotationSpeed = 10;
 		const translationSpeed = 0.5;
 
-		if (InputHandler.mouseDelta.y !== 0) {
-			this.camera.pitch += InputHandler.mouseDelta.y * deltaTime * rotationSpeed;
-			this.camera.pitch = Math.clamp(this.camera.pitch, -89, 89);
-		}
+		this.camera.pitch += InputHandler.getLookVertical() * deltaTime * rotationSpeed;
+		this.camera.pitch = Math.clamp(this.camera.pitch, -89, 89);
+		this.camera.yaw -= InputHandler.getLookHorizontal() * deltaTime * rotationSpeed;
 
-		if (InputHandler.mouseDelta.x !== 0) {
-			this.camera.yaw -= InputHandler.mouseDelta.x * deltaTime * rotationSpeed;
-		}
+		const movementY = InputHandler.getMovementVertical();
+		const movementX = InputHandler.getMovementHorizontal();
 
-		if (InputHandler.isKeyDown(Key.ArrowUp)) {
+		if (movementY !== 0) {
 			const forward = this.camera.forward;
-			this.camera.position[0] += forward[0] * deltaTime * speed;
-			this.camera.position[1] += forward[1] * deltaTime * speed;
-			this.camera.position[2] += forward[2] * deltaTime * speed;
+			this.camera.position[0] -= forward[0] * deltaTime * speed * movementY;
+			this.camera.position[1] -= forward[1] * deltaTime * speed * movementY;
+			this.camera.position[2] -= forward[2] * deltaTime * speed * movementY;
 		}
 
-		if (InputHandler.isKeyDown(Key.ArrowDown)) {
-			const forward = this.camera.forward;
-			this.camera.position[0] -= forward[0] * deltaTime * speed;
-			this.camera.position[1] -= forward[1] * deltaTime * speed;
-			this.camera.position[2] -= forward[2] * deltaTime * speed;
-		}
-
-		if (InputHandler.isKeyDown(Key.ArrowLeft)) {
+		if (movementX !== 0) {
 			const right = this.camera.right;
-			this.camera.position[0] += right[0] * deltaTime * speed;
-			this.camera.position[1] += right[1] * deltaTime * speed;
-			this.camera.position[2] += right[2] * deltaTime * speed;
-		}
-
-		if (InputHandler.isKeyDown(Key.ArrowRight)) {
-			const right = this.camera.right;
-			this.camera.position[0] -= right[0] * deltaTime * speed;
-			this.camera.position[1] -= right[1] * deltaTime * speed;
-			this.camera.position[2] -= right[2] * deltaTime * speed;
+			this.camera.position[0] -= right[0] * deltaTime * speed * movementX;
+			this.camera.position[1] -= right[1] * deltaTime * speed * movementX;
+			this.camera.position[2] -= right[2] * deltaTime * speed * movementX;
 		}
 
 		Gizmo.text("Position", new Vector2(this.width / 2, this.height - 80), "gray", TextAlign.Center);

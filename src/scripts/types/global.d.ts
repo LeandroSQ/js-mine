@@ -39,6 +39,7 @@ declare global {
 		clear: () => void;
 		line: (x1: number, y1: number, x2: number, y2: number) => void;
 		fillTextAligned(text: string, x: number, y: number, alignment: TextAlign): void;
+		fillCircle(x: number, y: number, radius: number): void;
 	}
 
 	interface Function {

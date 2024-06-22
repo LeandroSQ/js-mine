@@ -68,6 +68,17 @@ Also, why not, I moved the recording logic to a worker, first time I used an `Of
 
 Also, since the mesh system is organized, creating a bunch of cubes is easy, I'm not using instanced rendering yet, and to be honest I won't, since the goal of the project is to generate a single mesh for the world, and not a mesh for each block. Nevertheless, this helps to visualize the goal.
 
+### Day 3
+
+Actually didn't do much on the rendering side, I really wanted to work on my Gamepad support I carried over from other projects.
+And now that the gamepad support was refined... I also thought it would be a nice addition having a virtual Gamepad overlay
+
+<p align="center">
+	<img loading="lazy" src=".github/screenshots/day3.gif" style="height: 120px; border-radius: 10pt; box-shadow: 0px 5pt 15pt rgba(0, 0, 0, 0.25)"/>
+</p>
+
+<p align="center"><small>Took more time than I'd like to admit, but it looks so sick</small></p>
+
 ## Used in this project
 
 | Name | Description |
@@ -85,3 +96,4 @@ Also, since the mesh system is organized, creating a bunch of cubes is easy, I'm
 | [zipjs](https://gildas-lormeau.github.io/zip.js/) | For zip file manipulation ~duh~ |
 | [filesaver.js](https://github.com/eligrey/FileSaver.js) | For saving files ~duh~ |
 | [thebennybox](https://www.youtube.com/watch?v=Z9bYzpwVINA) | On the bright explanation of FXAA |
+| [gifski](https://github.com/ImageOptim/gifski) | For converting frames to gif like a champ |

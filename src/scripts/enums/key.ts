@@ -1,6 +1,9 @@
 /* eslint-disable no-unused-vars */
 export enum Key {
+	W = "w",
 	A = "a",
+	S = "s",
+	D = "d",
 	ArrowUp = "ArrowUp",
 	ArrowDown = "ArrowDown",
 	ArrowLeft = "ArrowLeft",

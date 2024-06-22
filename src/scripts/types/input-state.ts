@@ -10,3 +10,7 @@ export type InputState = {
 	longPress: boolean;
 	shortPress: boolean;
 };
+
+export type GamepadInputState = {
+	value: number;
+} & InputState;

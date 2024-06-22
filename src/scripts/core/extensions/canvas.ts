@@ -1,3 +1,5 @@
+import { TextAlign } from "../../enums/text-align";
+
 HTMLCanvasElement.prototype.screenshot = function (filename = "download.png") {
 	const a = document.createElement("a");
 	a.download = filename;
@@ -37,4 +39,10 @@ CanvasRenderingContext2D.prototype.fillTextAligned = function (text, x, y, align
 			this.fillText(text, x - metrics.width, y);
 			break;
 	}
+};
+
+CanvasRenderingContext2D.prototype.fillCircle = function (x, y, radius) {
+	this.beginPath();
+	this.arc(x, y, radius, 0, Math.PI * 2);
+	this.fill();
 };

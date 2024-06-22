@@ -8,6 +8,11 @@ export const SIMULATION_FREQUENCY = 60;
 export const SIMULATION_SUBSTEPS = 1;
 export const USE_ANIMATION_FRAME = true;
 
+// Gamepad
+export const GAMEPAD_DEADZONE = 0.1;
+export const GAMEPAD_LOOK_SENSITIVITY = 5.0;
+export const GAMEPAD_LINEARITY = 2.0;
+
 // Font
 export const FONT_SIZE = 48;
 export const FONT_FAMILY = "'Pixelify Sans', sans-serif";
