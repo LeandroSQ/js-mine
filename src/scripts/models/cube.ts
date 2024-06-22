@@ -8,52 +8,53 @@ export enum CubeFace {
 	DIRT = decode(2, 0),
 	GRASS = decode(0, 0),
 	GRASS_SIDE = decode(3, 0),
-	DIAMOND_ORE = decode(2, 3)
+	DIAMOND_ORE = decode(2, 3),
+	STONE = decode(1, 0)
 };
 
 export class Cube extends Mesh {
 
 	// #region Vertices
 	public static readonly frontFaceVertices = [
-		-1.0, -1.0, 1.0,
-		1.0, -1.0, 1.0,
-		1.0, 1.0, 1.0,
-		-1.0, 1.0, 1.0,
+		-0.5, -0.5, 0.5,
+		0.5, -0.5, 0.5,
+		0.5, 0.5, 0.5,
+		-0.5, 0.5, 0.5,
 	] as const;
 
 	public static readonly backFaceVertices = [
-		1.0, -1.0, -1.0,
-		-1.0, -1.0, -1.0,
-		-1.0, 1.0, -1.0,
-		1.0, 1.0, -1.0,
+		0.5, -0.5, -0.5,
+		-0.5, -0.5, -0.5,
+		-0.5, 0.5, -0.5,
+		0.5, 0.5, -0.5,
 	] as const;
 
 	public static readonly topFaceVertices = [
-		-1.0, 1.0, -1.0,
-		-1.0, 1.0, 1.0,
-		1.0, 1.0, 1.0,
-		1.0, 1.0, -1.0,
+		-0.5, 0.5, -0.5,
+		-0.5, 0.5, 0.5,
+		0.5, 0.5, 0.5,
+		0.5, 0.5, -0.5,
 	] as const;
 
 	public static readonly bottomFaceVertices = [
-		-1.0, -1.0, -1.0,
-		1.0, -1.0, -1.0,
-		1.0, -1.0, 1.0,
-		-1.0, -1.0, 1.0,
+		-0.5, -0.5, -0.5,
+		0.5, -0.5, -0.5,
+		0.5, -0.5, 0.5,
+		-0.5, -0.5, 0.5,
 	] as const;
 
 	public static readonly rightFaceVertices = [
-		1.0, -1.0, 1.0,
-		1.0, -1.0, -1.0,
-		1.0, 1.0, -1.0,
-		1.0, 1.0, 1.0,
+		0.5, -0.5, 0.5,
+		0.5, -0.5, -0.5,
+		0.5, 0.5, -0.5,
+		0.5, 0.5, 0.5,
 	] as const;
 
 	public static readonly leftFaceVertices = [
-		-1.0, -1.0, -1.0,
-		-1.0, -1.0, 1.0,
-		-1.0, 1.0, 1.0,
-		-1.0, 1.0, -1.0,
+		-0.5, -0.5, -0.5,
+		-0.5, -0.5, 0.5,
+		-0.5, 0.5, 0.5,
+		-0.5, 0.5, -0.5
 	] as const;
 
 	public static readonly vertices = new Float32Array(
@@ -113,49 +114,48 @@ export class Cube extends Mesh {
 
 	// #region Normals
 	public static readonly frontFaceNormals = [
-		0.0, 0.0, 0.0,
-		0.0, 1.0, 1.0,
-		1.0, 1.0, 2.0,
-		2.0, 2.0, 2.0,
+		0.0, 0.0, 1.0,
+		0.0, 0.0, 1.0,
+		0.0, 0.0, 1.0,
+		0.0, 0.0, 1.0
 	] as const;
 
 	public static readonly backFaceNormals = [
-		3.0, 3.0, 3.0,
-		3.0, 4.0, 4.0,
-		4.0, 4.0, 5.0,
-		5.0, 5.0, 5.0,
+		0.0, 0.0, -1.0,
+		0.0, 0.0, -1.0,
+		0.0, 0.0, -1.0,
+		0.0, 0.0, -1.0
 	] as const;
 
 	public static readonly topFaceNormals = [
-		6.0, 6.0, 6.0,
-		6.0, 7.0, 7.0,
-		7.0, 7.0, 8.0,
-		8.0, 8.0, 8.0,
+		0.0, 1.0, 0.0,
+		0.0, 1.0, 0.0,
+		0.0, 1.0, 0.0,
+		0.0, 1.0, 0.0
 	] as const;
 
 	public static readonly bottomFaceNormals = [
-		9.0, 9.0, 9.0,
-		9.0, 10.0, 10.0,
-		10.0, 10.0, 11.0,
-		11.0, 11.0, 11.0,
+		0.0, -1.0, 0.0,
+		0.0, -1.0, 0.0,
+		0.0, -1.0, 0.0,
+		0.0, -1.0, 0.0
 	] as const;
 
 	public static readonly rightFaceNormals = [
-		12.0, 12.0, 12.0,
-		12.0, 13.0, 13.0,
-		13.0, 13.0, 14.0,
-		14.0, 14.0, 14.0,
+		1.0, 0.0, 0.0,
+		1.0, 0.0, 0.0,
+		1.0, 0.0, 0.0,
+		1.0, 0.0, 0.0
 	] as const;
 
 	public static readonly leftFaceNormals = [
-		15.0, 15.0, 15.0,
-		15.0, 16.0, 16.0,
-		16.0, 16.0, 17.0,
-		17.0, 17.0, 17.0,
+		-1.0, 0.0, 0.0,
+		-1.0, 0.0, 0.0,
+		-1.0, 0.0, 0.0,
+		-1.0, 0.0, 0.0
 	] as const;
 
-	public static normals = new Float32Array(this.vertices.length).map((_, i) => Math.floor(i / 4));
-	/* public static readonly normals = new Float32Array(
+	public static readonly normals = new Float32Array(
 		[
 			...this.frontFaceNormals,
 			...this.backFaceNormals,
@@ -164,7 +164,7 @@ export class Cube extends Mesh {
 			...this.rightFaceNormals,
 			...this.leftFaceNormals
 		] as const
-	); */
+	);
 	// #endregion
 
 	// #region UVs
@@ -172,7 +172,6 @@ export class Cube extends Mesh {
 		const rows = 16, cols = 16;
 		const row = Math.floor(face / cols);
 		const col = face % cols;
-		console.log(face, col, row);
 
 		return [
 			col       / rows, (rows - row) / cols,

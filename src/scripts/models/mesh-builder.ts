@@ -1,5 +1,11 @@
 import { Size } from "../types/size";
+import { Mesh } from "./mesh";
 import { Vector3 } from "./vector3";
+
+const indices = [
+	0, 1, 2,
+	0, 2, 3,
+];
 
 export class MeshBuilder {
 
@@ -10,30 +16,23 @@ export class MeshBuilder {
 
 	constructor(private gl: WebGLContext) { }
 
-	public addQuad(vertices: number[], normals: number[], uvs: number[], indices: number[]) {
-		const offset = this.vertices.length / 3;
-		this.vertices.push(...vertices);
+	public addQuad(offset: number[], vertices: readonly number[], normals: readonly number[], uvs: readonly number[]) {
 		this.normals.push(...normals);
 		this.uvs.push(...uvs);
-		this.indices.push(...indices.map(i => i + offset));
+
+		const indexOffset = this.vertices.length / 3;
+		this.indices.push(...indices.map(i => i + indexOffset));
+		this.vertices.push(...vertices.map((v, i) => v + offset[i % 3]));
 	}
 
-	private createBuffer(data: number[]) {
-		const buffer = this.gl.createBuffer();
-		if (!buffer) throw new Error("Could not create buffer");
-		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);
-		this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(data), this.gl.STATIC_DRAW);
-
-		return buffer;
+	public build(): Mesh {
+		return new Mesh(
+			this.gl,
+			new Float32Array(this.vertices),
+			new Float32Array(this.uvs),
+			new Float32Array(this.normals),
+			new Uint16Array(this.indices)
+		);
 	}
-
-	public build() {
-		const vertexBuffer = this.createBuffer(this.vertices);
-		const normalBuffer = this.createBuffer(this.normals);
-		const uvBuffer = this.createBuffer(this.uvs);
-		const indexBuffer = this.createBuffer(this.indices);
-
-	}
-
 
 }

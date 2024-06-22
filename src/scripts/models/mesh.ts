@@ -24,7 +24,7 @@ export class Mesh {
 		}
 
 		// Setup the shader
-		this.shader = new Shader(this.gl, "mesh");
+		this.shader = new Shader(this.gl, "geometry");
 		await this.shader.setup({
 			source: {
 				vertex: "vertex",
@@ -53,7 +53,7 @@ export class Mesh {
 
 		// Create the model matrix
 		this.matrix = mat4.create();
-		mat4.translate(this.matrix, this.matrix, [0.0, 0.0, -6.0]);
+		mat4.translate(this.matrix, this.matrix, [-8.0, -10, -8.0]);
 	}
 
 	public render(projection: mat4, view: mat4) {

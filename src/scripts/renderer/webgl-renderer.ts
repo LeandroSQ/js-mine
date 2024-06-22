@@ -1,16 +1,15 @@
 /* eslint-disable max-statements */
-import { mat4, vec3 } from "gl-matrix";
+import { mat4 } from "gl-matrix";
 import { Main } from "../main";
-import { Cube, CubeFace } from "../models/cube";
-import { Optional } from "../types/optional";
 import { Size } from "../types/size";
 import { Log } from "../utils/log";
 import { Theme } from "../utils/theme";
 import { Color } from "../utils/color";
 import { Shader } from "../models/shader";
-import { Texture } from "../models/texture";
 import { RenderingPipelineBuffer } from "../models/rendering-pipeline-buffer";
 import { TerrainGenerator } from "../models/terrain-generator";
+import { Mesh } from "../models/mesh";
+import { Vector3 } from "../models/vector3";
 
 export class WebGLRenderer {
 
@@ -21,7 +20,7 @@ export class WebGLRenderer {
 
 	private frameBuffer: RenderingPipelineBuffer;
 
-	private cubes: Array<Cube> = [];
+	private terrain: Mesh;
 
 	constructor(private main: Main) {  }
 
@@ -78,7 +77,10 @@ export class WebGLRenderer {
 		// this.cube = new Cube(this.gl, CubeFace.DIAMOND_ORE, CubeFace.DIAMOND_ORE, CubeFace.DIAMOND_ORE);
 		// await this.cube.setup();
 
-		this.cubes = await TerrainGenerator.generateCubes(this.gl, 16, 1);
+		// this.cubes = await TerrainGenerator.generateCubes(this.gl, 16, 1);
+
+		this.terrain = await TerrainGenerator.generate(this.gl, 16, Vector3.zero);
+		await this.terrain.setup();
 	}
 
 	async setup() {
@@ -89,8 +91,8 @@ export class WebGLRenderer {
 		await this.setupMesh();
 		await this.setupTextures();
 
-		await this.frameBuffer.addFilter("fxaa");
-		await this.frameBuffer.addFilter("sharpen");
+		// await this.frameBuffer.addFilter("fxaa");
+		// await this.frameBuffer.addFilter("sharpen");
 		await this.frameBuffer.addFilter("gamma");
 	}
 	// #endregion
@@ -129,7 +131,9 @@ export class WebGLRenderer {
 	private drawSingleCube() {
 		const projection = this.main.camera.getProjectionMatrix(this.main.screen);
 		const view = this.main.camera.getViewMatrix();
-		this.cubes.forEach(cube => cube.render(projection, view));
+		this.terrain.render(projection, view);
+
+		// this.cubes.forEach(cube => cube.render(projection, view));
 		/* this.bindProjectionMatrix(this.meshShader);
 
 		// Draw the cube
