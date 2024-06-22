@@ -13,7 +13,7 @@ import { Gizmo } from "../../utils/gizmo";
 export abstract class InputHandler {
 
 	private static invalidated = false;
-	private static readonly VERBOSE_KEYBOARD = DEBUG && true as const;
+	private static readonly VERBOSE_KEYBOARD = DEBUG && false as const;
 	private static readonly VERBOSE_MOUSE = DEBUG && false as const;
 	private static readonly VERBOSE_GAMEPAD = DEBUG && false as const;
 
@@ -464,9 +464,12 @@ export abstract class InputHandler {
 	}
 
 	public static isCrouching() {
-		return this.isKeyDown(Key.ArrowDown)
-			|| this.isMouseButtonDown(MouseButton.Right)
+		return this.isKeyDown(Key.Shift)
 			|| this.isGamepadButtonDown(GamepadButton.Down, GamepadButton.B);
+	}
+
+	public static isRecording() {
+		return this.isKeyJustReleased(Key.R);
 	}
 	// #endregion
 

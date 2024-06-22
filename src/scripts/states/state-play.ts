@@ -41,29 +41,35 @@ export class StatePlay extends AState {
 
 	async update(deltaTime: number) {
 		this.invalidate();
-		const speed = 2.5;
-		const rotationSpeed = 10;
-		const translationSpeed = 0.5;
+		const movementSpeed = 5;
+		const rotationSpeed = 20;
 
-		this.camera.pitch += InputHandler.getLookVertical() * deltaTime * rotationSpeed;
+		this.camera.pitch -= InputHandler.getLookVertical() * deltaTime * rotationSpeed;
 		this.camera.pitch = Math.clamp(this.camera.pitch, -89, 89);
-		this.camera.yaw -= InputHandler.getLookHorizontal() * deltaTime * rotationSpeed;
+		this.camera.yaw += InputHandler.getLookHorizontal() * deltaTime * rotationSpeed;
 
 		const movementY = InputHandler.getMovementVertical();
 		const movementX = InputHandler.getMovementHorizontal();
 
 		if (movementY !== 0) {
 			const forward = this.camera.forward;
-			this.camera.position[0] -= forward[0] * deltaTime * speed * movementY;
-			this.camera.position[1] -= forward[1] * deltaTime * speed * movementY;
-			this.camera.position[2] -= forward[2] * deltaTime * speed * movementY;
+			this.camera.position[0] -= forward[0] * deltaTime * movementSpeed * movementY;
+			this.camera.position[1] -= forward[1] * deltaTime * movementSpeed * movementY;
+			this.camera.position[2] -= forward[2] * deltaTime * movementSpeed * movementY;
 		}
 
 		if (movementX !== 0) {
 			const right = this.camera.right;
-			this.camera.position[0] -= right[0] * deltaTime * speed * movementX;
-			this.camera.position[1] -= right[1] * deltaTime * speed * movementX;
-			this.camera.position[2] -= right[2] * deltaTime * speed * movementX;
+			this.camera.position[0] += right[0] * deltaTime * movementSpeed * movementX;
+			this.camera.position[1] += right[1] * deltaTime * movementSpeed * movementX;
+			this.camera.position[2] += right[2] * deltaTime * movementSpeed * movementX;
+		}
+
+		if (InputHandler.isCrouching()) {
+			this.camera.position[1] -= deltaTime * movementSpeed;
+		}
+		if (InputHandler.isJumping()) {
+			this.camera.position[1] += deltaTime * movementSpeed;
 		}
 
 		Gizmo.text("Position", new Vector2(this.width / 2, this.height - 80), "gray", TextAlign.Center);
