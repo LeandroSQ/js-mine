@@ -79,6 +79,14 @@ And now that the gamepad support was refined... I also thought it would be a nic
 
 <p align="center"><small>Took more time than I'd like to admit, but it looks so sick</small></p>
 
+Just so I can say I did something on the renderer, I created a `MeshBuilder`, the goal with this is to create geometry on the fly, so instead of rendering N cubes, I generate a single mesh with all the faces that are touching Air, which means the faces inside will be culled, and the faces outside will be rendered. **This is what makes this whole thing possible, without this optimization, the performance would be terrible.**
+
+<p align="center">
+	<img loading="lazy" src=".github/screenshots/day3-1.png" style="height: 400px; border-radius: 10pt; box-shadow: 0px 5pt 15pt rgba(0, 0, 0, 0.25)"/>
+</p>
+
+<p align="center"><small>Note to self: I need to add a counter for triangles, vertices and draw calls<br>That would be a nice debugging info to have.</small></p>
+
 ## Used in this project
 
 | Name | Description |
