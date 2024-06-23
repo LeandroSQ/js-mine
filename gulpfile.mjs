@@ -1,14 +1,17 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
 /* eslint-env node */
-const { src, dest, series, parallel, watch } = require("gulp");
-const browserSync = require("browser-sync").create();
-const del = require("del");
-const htmlMinify = require("gulp-htmlmin");
-const sourcemaps = require("gulp-sourcemaps");
-const sass = require("gulp-sass")(require("sass"));
-const gulpEsbuild = require("gulp-esbuild").createGulpEsbuild({ incremental: false, piping: true });
-const cssAutoPrefixer = require("gulp-autoprefixer");
-const concat = require("gulp-concat");
+import gulp from "gulp";
+const { src, dest, series, parallel, watch, symlink } = gulp;
+import browserSync from "browser-sync";
+import htmlMinify from "gulp-htmlmin";
+import sourcemaps from "gulp-sourcemaps";
+import * as dartSass from "sass";
+import gulpSass from "gulp-sass";
+const sass = gulpSass(dartSass);
+import { createGulpEsbuild } from "gulp-esbuild";
+const gulpEsbuild = createGulpEsbuild({ incremental: false, pipe: false });
+import cssAutoPrefixer from "gulp-autoprefixer";
+import concat from "gulp-concat";
+import { deleteAsync } from "del";
 
 // Utilities
 function isArgumentPassed(...args) {
@@ -49,6 +52,7 @@ const browserSyncOptions = {
 	},
 };
 
+/** @type import("gulp-esbuild").Options */
 const esbuildOptions = {
 	bundle: true,
 	sourcemap: isProduction ? undefined : "both",
@@ -60,7 +64,7 @@ const esbuildOptions = {
 		"node12",
 		"safari11"
 	],
-	outdir: "./",
+	// outdir: "./",
 	platform: "browser",
 	minify: shouldMinify,
 	minifyWhitespace: shouldMinify,
@@ -68,7 +72,7 @@ const esbuildOptions = {
 	minifySyntax: shouldMinify,
 	treeShaking: true,
 	define: {
-		DEBUG: !isProduction,
+		"DEBUG": `${!isProduction}`,
 	}
 };
 
@@ -89,8 +93,8 @@ function reloadBrowsers() {
 	return browserSync.reload({ stream: true });
 }
 
-function clean() {
-	return del("dist");
+async function cleanDistDir() {
+	await deleteAsync("./dist");
 }
 
 function initializeBrowserSync() {
@@ -98,7 +102,10 @@ function initializeBrowserSync() {
 }
 
 function handleHtml() {
-	return src("src/**/*.html").pipe(htmlMinify(htmlOptions)).pipe(dest("./dist")).pipe(reloadBrowsers());
+	return src("src/**/*.html")
+		.pipe(htmlMinify(htmlOptions))
+		.pipe(dest("./dist"))
+		.pipe(reloadBrowsers());
 }
 
 function watchHtml() {
@@ -117,23 +124,29 @@ function watchTs() {
 }
 
 function handleShaders() {
-	return src("./src/shaders/**.glsl").pipe(dest("./dist/shaders")).pipe(reloadBrowsers());
+	if (isProduction) {
+		return src("./src/shaders/**/**.glsl")
+			.pipe(dest("./dist/shaders"))
+			.pipe(reloadBrowsers());
+	} else {
+		return src("./src/shaders/**/**.glsl")
+			.pipe(symlink("./dist/shaders", { force: true }));
+	}
 }
 
 function watchShaders() {
-	return watch("src/shaders/**.glsl", handleShaders);
+	return watch("src/shaders/**.glsl", reloadBrowsers());
 }
 
 function handleAssets() {
-	return src("./src/assets/**/**.*").pipe(dest("./dist/assets")).pipe(reloadBrowsers());
-}
-
-function handleFavicon() {
-	return src("./src/assets/favicon/**.*").pipe(dest("./dist"));
-}
-
-function watchAssets() {
-	return watch("./src/assets/**/**.*", series(handleAssets, handleFavicon));
+	if (isProduction) {
+		return src("./src/assets/**/**.*")
+			.pipe(dest("./dist/assets"))
+			.pipe(reloadBrowsers());
+	} else {
+		return src("./src/assets/**/**.*")
+			.pipe(symlink("./dist/assets", { force: true }));
+	}
 }
 
 function handleSCSS() {
@@ -152,12 +165,18 @@ function watchSCSS() {
 }
 
 // Export tasks
-module.exports.assets = handleAssets;
-module.exports.shaders = handleShaders;
-module.exports.html = handleHtml;
-module.exports.js = handleTs;
-module.exports.scss = handleSCSS;
-module.exports.clean = clean;
-module.exports.build = series(clean, parallel(handleAssets, handleShaders, handleSCSS, handleHtml, handleTs, handleFavicon));
-module.exports.dev = series(module.exports.build, parallel(watchAssets, watchShaders, watchSCSS, watchHtml, watchTs, initializeBrowserSync));
-module.exports.default = module.exports.build;
+export const assets = handleAssets;
+export const shaders = handleShaders;
+export const html = handleHtml;
+export const ts = handleTs;
+export const scss = handleSCSS;
+export const clean = cleanDistDir;
+export const build = series(clean, parallel(assets, shaders, scss, html, ts));
+export const dev = series(clean,
+	parallel(
+		initializeBrowserSync,
+		parallel(assets, shaders, scss, html, ts),
+		parallel(watchShaders, watchSCSS, watchHtml, watchTs)
+	)
+);
+export default build;

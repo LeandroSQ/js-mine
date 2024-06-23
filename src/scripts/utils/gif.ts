@@ -1,4 +1,4 @@
-import * as FileSaver from "filesaver.js";
+import FileSaver from 'file-saver';
 import { Log } from "./log";
 
 // Not pretty to have code as this outside of a class,
