@@ -7,37 +7,15 @@ import sourcemaps from "gulp-sourcemaps";
 import * as dartSass from "sass";
 import gulpSass from "gulp-sass";
 const sass = gulpSass(dartSass);
-import { createGulpEsbuild } from "gulp-esbuild";
-const gulpEsbuild = createGulpEsbuild({ incremental: false, pipe: false });
 import cssAutoPrefixer from "gulp-autoprefixer";
 import concat from "gulp-concat";
 import { deleteAsync } from "del";
-
-// Utilities
-function isArgumentPassed(...args) {
-	for (let i = 0; i < args.length; i++) {
-		if (!args[i].startsWith("--")) {
-			if (args[i].length > 1) {
-				args.unshift(`--${args[i]}`);
-			} else {
-				args.unshift(`-${args[i]}`);
-			}
-
-			i++;
-		}
-	}
-
-	for (const key of args) {
-		if (process.argv.includes(key)) return true;
-		if (!key.startsWith("-") && key.toUpperCase() in process.env) return true;
-	}
-
-	return false;
-}
+import debounce from "debounce";
+import { buildPipe as gulpEsbuild } from "./build/esbuild.mjs";
+import { isArgumentPassed } from "./build/utils/argparser.mjs";
 
 // Env
 const isProduction = isArgumentPassed("production", "prod");
-const shouldMinify = true;
 console.log(isProduction ? "PRODUCTION" : "DEVELOPMENT");
 
 // Options
@@ -50,30 +28,6 @@ const browserSyncOptions = {
 		baseDir: "./dist",
 		port: 3000,
 	},
-};
-
-/** @type import("gulp-esbuild").Options */
-const esbuildOptions = {
-	bundle: true,
-	sourcemap: isProduction ? undefined : "both",
-	target: [
-		"es2015",
-		"chrome58",
-		"edge18",
-		"firefox57",
-		"node12",
-		"safari11"
-	],
-	// outdir: "./",
-	platform: "browser",
-	minify: shouldMinify,
-	minifyWhitespace: shouldMinify,
-	minifyIdentifiers: shouldMinify,
-	minifySyntax: shouldMinify,
-	treeShaking: true,
-	define: {
-		"DEBUG": `${!isProduction}`,
-	}
 };
 
 const htmlOptions = {
@@ -114,13 +68,13 @@ function watchHtml() {
 
 function handleTs() {
 	return src(["./src/scripts/main.ts", "./src/scripts/jobs/gif.worker.ts"])
-		.pipe(gulpEsbuild(esbuildOptions))
+		.pipe(gulpEsbuild())
 		.pipe(dest("./dist/scripts"))
 		.pipe(reloadBrowsers());
 }
 
 function watchTs() {
-	return watch("src/scripts/**/*.ts", handleTs);
+	return watch("src/scripts/**/*.ts", debounce(handleTs, 250));
 }
 
 function handleShaders() {
@@ -154,7 +108,7 @@ function handleSCSS() {
 		.pipe(sourcemaps.init())
 		.pipe(sass(cssOptions).on("error", sass.logError))
 		.pipe(cssAutoPrefixer())
-		.pipe(concat("style.min.css"))
+		.pipe(concat("main.css"))
 		.pipe(sourcemaps.write("./"))
 		.pipe(dest("./dist/styles"))
 		.pipe(reloadBrowsers());
