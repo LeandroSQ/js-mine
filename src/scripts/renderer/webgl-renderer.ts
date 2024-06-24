@@ -5,11 +5,10 @@ import { Size } from "../types/size";
 import { Log } from "../utils/log";
 import { Theme } from "../utils/theme";
 import { Color } from "../utils/color";
-import { Shader } from "../models/shader";
 import { RenderingPipelineBuffer } from "../models/rendering-pipeline-buffer";
-import { TerrainGenerator } from "../models/terrain-generator";
-import { Mesh } from "../models/mesh";
-import { Vector3 } from "../models/vector3";
+import { ChunkManager } from "../models/chunk-manager";
+import { Chunk } from "../models/chunk";
+import { Gizmo3D } from "../utils/gizmo3d";
 
 export class WebGLRenderer {
 
@@ -19,8 +18,6 @@ export class WebGLRenderer {
 	private isDirty = false;
 
 	private frameBuffer: RenderingPipelineBuffer;
-
-	private terrain: Mesh;
 
 	constructor(private main: Main) {  }
 
@@ -78,9 +75,7 @@ export class WebGLRenderer {
 		// await this.cube.setup();
 
 		// this.cubes = await TerrainGenerator.generateCubes(this.gl, 16, 1);
-
-		this.terrain = await TerrainGenerator.generate(this.gl, 16, Vector3.zero);
-		await this.terrain.setup();
+		await Chunk.setup(this.gl);
 	}
 
 	async setup() {
@@ -90,6 +85,7 @@ export class WebGLRenderer {
 		this.frameBuffer = new RenderingPipelineBuffer(this.gl);
 		await this.setupMesh();
 		await this.setupTextures();
+		await Gizmo3D.setup(this.gl);
 
 		// await this.frameBuffer.addFilter("fxaa");
 		// await this.frameBuffer.addFilter("sharpen");
@@ -98,93 +94,30 @@ export class WebGLRenderer {
 	// #endregion
 
 	// #region Render
-	private getModelMatrix() {
-		const modelMatrix = mat4.create();
-		// const rad = 45 * Math.PI / 180;
-		const rad = this.main.globalTimer;
-
-		mat4.translate(modelMatrix, modelMatrix, [0.0, 0.0, -6.0]);
-		mat4.rotate(modelMatrix, modelMatrix, rad, [0.0, 1.0, 0.0]);
-		mat4.rotate(modelMatrix, modelMatrix, rad, [1.0, 0.0, 0.0]);
-
-		return modelMatrix;
-	}
-
-	private bindProjectionMatrix(shader: Shader) {
-		// Combine all matrixes on the CPU
-		const projection = this.main.camera.getProjectionMatrix(this.main.screen);
-		const view = this.main.camera.getViewMatrix();
-		const model = this.getModelMatrix();
-		const mvp = mat4.create();
-		mat4.multiply(mvp, projection, view);
-		mat4.multiply(mvp, mvp, model);
-
-		shader.setUniform("u_matrix", mvp);
-		shader.setUniform("u_texture", 0);
-	}
-
 	private clear(color: { r: number, g: number, b: number }) {
 		this.gl.clearColor(color.r, color.g, color.b, 1.0);
 		this.gl.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 	}
-
-	private drawSingleCube() {
-		const projection = this.main.camera.getProjectionMatrix(this.main.screen);
-		const view = this.main.camera.getViewMatrix();
-		this.terrain.render(projection, view);
-
-		// this.cubes.forEach(cube => cube.render(projection, view));
-		/* this.bindProjectionMatrix(this.meshShader);
-
-		// Draw the cube
-		this.textureAtlas.bind();
-		this.meshShader.bindBuffer("index", Cube.indices);
-		this.gl.drawElements(GL.TRIANGLES, Cube.indices.length, GL.UNSIGNED_SHORT, 0); */
-	}
-
-	/* private drawMultipleCubes() {
-		// Combine all matrixes on the CPU
-		const projection = this.main.camera.getProjectionMatrix(this.main.screen);
-		const view = this.main.camera.getViewMatrix();
-		const model = this.getModelMatrix();
-
-		const instances = 2;
-		const positions = [
-			vec3.fromValues(0, 0, 0),
-			vec3.fromValues(1, 2, 0.5),
-			vec3.fromValues(0, -1, 0),
-			vec3.fromValues(0, 0, -1),
-		]
-
-		this.meshShader.setUniform("u_texture", 0);
-		this.textureAtlas.bind();
-		this.meshShader.bindBuffer("index", Cube.indices);
-
-		for (let i = 0; i < instances; i++) {
-			for (let j = 0; j < instances; j++) {
-				for (let k = 0; k < instances; k++) {
-					const mvp = mat4.create();
-					const translation = mat4.create();
-					mat4.translate(translation, translation, positions[i]);
-					mat4.multiply(mvp, projection, view);
-					mat4.multiply(mvp, mvp, model);
-					mat4.multiply(mvp, mvp, translation);
-
-					this.meshShader.setUniform("u_matrix", mvp);
-					this.gl.drawElements(GL.TRIANGLES, Cube.indices.length, GL.UNSIGNED_SHORT, 0);
-				}
-			}
-		}
-	} */
 
 	private drawScene() {
 		// Scene
 		const color = Color.decode(Theme.background, true);
 		this.clear(color);
 
-		// Setup
-		this.drawSingleCube();
-		// this.drawMultipleCubes();
+		// Matrixes
+		const projection = this.main.camera.getProjectionMatrix(this.main.screen);
+		const view = this.main.camera.getViewMatrix();
+
+		// Draw chunks
+		for (const chunk of ChunkManager.activeChunks) {
+			if (this.main.camera.isChunkInsideFrustum(view, projection, chunk)) {
+				this.main.analytics.notifyChunkVisible(chunk);
+				chunk.render(this.gl, projection, view);
+			}
+		}
+
+		Gizmo3D.render(this.gl, projection, view);
+		Gizmo3D.clear();
 	}
 
 	public render() {

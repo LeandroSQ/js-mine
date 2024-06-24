@@ -3,8 +3,9 @@ import { ImageUtils } from "../utils/image";
 
 export class Texture {
 
-
 	private texture: Optional<WebGLTexture> = null;
+
+	public static terrain: Texture;
 
 	constructor(private gl: WebGLContext) { }
 

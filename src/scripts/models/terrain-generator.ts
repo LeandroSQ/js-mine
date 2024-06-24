@@ -1,10 +1,13 @@
 import { Optional } from './../types/optional';
-import { mat4, vec3 } from "gl-matrix";
-import { Size } from "../types/size";
 import { Cube, CubeFace } from "./cube";
 import { MeshBuilder } from "./mesh-builder";
 import { Vector3 } from "./vector3";
-import { Mesh } from './mesh';
+import { createNoise2D, NoiseFunction2D } from 'simplex-noise';
+import Alea from 'alea';
+import { CHUNK_HEIGHT, CHUNK_SIZE } from '../constants';
+import { Vector2 } from './vector2';
+import { Chunk } from './chunk';
+import { Log } from '../utils/log';
 
 // Declare the sides
 const sideUp = new Vector3(0, 1, 0);
@@ -40,16 +43,31 @@ export class Array3D<T> {
 
 export abstract class TerrainGenerator {
 
-	public static generate(gl: WebGLContext, size: number, position: Vector3): Mesh {
-		const meshBuilder = new MeshBuilder(gl);
+	// TODO: Move to worker
+	private static readonly seed = "myseed" + Math.random();
+	private static readonly altitudeNoiseGenerator = createNoise2D(Alea(`${this.seed}-altitude`));
+	private static readonly moistureNoiseGenerator = createNoise2D(Alea(`${this.seed}-moisture`));
+	private static readonly temperatureNoiseGenerator = createNoise2D(Alea(`${this.seed}-temperature`));
+
+	private static getNoise(x: number, z: number, generator: NoiseFunction2D, scale = 70, min = 0.0, max = 1.0): number {
+		return generator(x / scale, z / scale) * (max - min) + min;
+	}
+
+	private static getAltitudeAt(x: number, z: number): number {
+		return Math.floor(this.getNoise(x, z, this.altitudeNoiseGenerator, 100, 0.11 * CHUNK_HEIGHT, 0.5 * CHUNK_HEIGHT));
+	}
+
+	public static generateChunk(position: Vector2): Chunk {
+		Log.debug("TerrainGenerator", "Generating chunk... at " + position.toString());
+		const meshBuilder = new MeshBuilder();
 
 		// Generate the cubes
-		const cubes = this.generateCubeTypes(size);
+		const cubes = this.generateCubeTypes(position);
 
 		// Generate the mesh
-		for (let x = 0; x < size; x++) {
-			for (let y = 0; y < size; y++) {
-				for (let z = 0; z < size; z++) {
+		for (let x = 0; x < CHUNK_SIZE; x++) {
+			for (let y = 0; y < CHUNK_HEIGHT; y++) {
+				for (let z = 0; z < CHUNK_SIZE; z++) {
 					const type = cubes.get(x, y, z);
 					if (type) {
 						const pos = new Vector3(x, y, z);
@@ -66,7 +84,7 @@ export abstract class TerrainGenerator {
 						if (!front) this.addFace(meshBuilder, arr, sideFront, type);
 						if (!back) this.addFace(meshBuilder, arr, sideBack, type);
 						if (!top) this.addFace(meshBuilder, arr, sideUp, type);
-						if (!bottom) this.addFace(meshBuilder, arr, sideDown, type);
+						if (!bottom && y > 0) this.addFace(meshBuilder, arr, sideDown, type);
 						if (!right) this.addFace(meshBuilder, arr, sideRight, type);
 						if (!left) this.addFace(meshBuilder, arr, sideLeft, type);
 					}
@@ -74,7 +92,8 @@ export abstract class TerrainGenerator {
 			}
 		}
 
-		return meshBuilder.build();
+		// TODO: Pre-translate the vertices so we don't have to create a new matrix every frame :p
+		return meshBuilder.build(position);
 	}
 
 	private static addFace(meshBuilder: MeshBuilder, position: number[], direction: Vector3, face: CubeFace) {
@@ -96,49 +115,34 @@ export abstract class TerrainGenerator {
 		}
 	}
 
-	private static generateCubeTypes(size: number): Array3D<Optional<CubeFace>> {
-		const list: Array3D<Optional<CubeFace>> = new Array3D(size, size, size);
+	private static generateCubeTypes(position: Vector2): Array3D<Optional<CubeFace>> {
+		const list: Array3D<Optional<CubeFace>> = new Array3D(CHUNK_SIZE, CHUNK_HEIGHT, CHUNK_SIZE);
 
-		for (let x = 0; x < size; x++) {
-			for (let y = 0; y < size; y++) {
-				for (let z = 0; z < size; z++) {
-					if (y < size / 3) {
+		const stoneLevel = 3;
+
+		for (let x = 0; x < CHUNK_SIZE; x++) {
+			for (let z = 0; z < CHUNK_SIZE; z++) {
+				const tileX = x + Math.ceil(position.x * CHUNK_SIZE);
+				const tileY = z + Math.ceil(position.y * CHUNK_SIZE);
+				const altitude = this.getAltitudeAt(tileX, tileY);
+
+				for (let y = 0; y < CHUNK_HEIGHT; y++) {
+					if (y < stoneLevel) {
 						list.set(x, y, z, CubeFace.STONE);
-					} else if (y < size / 2 && Math.sin(x + y * 1000 + z + Math.random()) < 0.25) {
-						list.set(x, y, z, CubeFace.DIRT);
+					} else if (y < altitude) {
+						const moisture = this.getNoise(x, z, this.moistureNoiseGenerator, 100, 0.0, 100.0);
+						const temperature = this.getNoise(x, z, this.temperatureNoiseGenerator, 100, 20.0, 50.0);
+
+						if (moisture < 50 && temperature < 30) {
+							list.set(x, y, z, CubeFace.SAND);
+						} else if (temperature < 30) {
+							list.set(x, y, z, CubeFace.GRASS);
+						} else {
+							list.set(x, y, z, CubeFace.SNOW);
+						}
 					} else {
 						list.set(x, y, z, null);
 					}
-				}
-			}
-		}
-
-		return list;
-	}
-
-	public static async generateCubes(gl: WebGLContext, size: number, height: number): Promise<Array<Cube>> {
-		const list: Array<Cube> = [];
-
-		for (let x = 0; x < size; x++) {
-			for (let y = 0; y < height; y++) {
-				for (let z = 0; z < size; z++) {
-					const cube = new Cube(gl, CubeFace.GRASS, CubeFace.GRASS_SIDE, CubeFace.DIRT);
-					list.push(cube);
-				}
-			}
-		}
-
-		await Promise.all(list.map(cube => cube.setup()));
-
-		for (let x = 0; x < size; x++) {
-			for (let y = 0; y < height; y++) {
-				for (let z = 0; z < size; z++) {
-					const cube = list[x + y * size + z * size * height];
-					const pos = vec3.fromValues(x, y, z);
-					vec3.add(pos, pos, [-size / 2, 3, -size]);
-					vec3.scale(pos, pos, 2);
-
-					mat4.translate(cube.matrix, cube.matrix, pos);
 				}
 			}
 		}

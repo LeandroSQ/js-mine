@@ -2,8 +2,6 @@ import { Optional } from "./../types/optional";
 import { FileUtils } from "../utils/file";
 import { Log } from "../utils/log";
 import { Dictionary } from "../types/dictionary";
-import { mat4 } from "gl-matrix";
-import * as GLMatrix from "gl-matrix";
 
 export type BufferDataType = Float32Array | Uint16Array | Uint8Array | Int16Array | Int8Array | Uint32Array | Int32Array;
 export type BufferDataTypeConstructor = typeof Float32Array | typeof Uint16Array | typeof Uint8Array | typeof Int16Array | typeof Int8Array | typeof Uint32Array | typeof Int32Array;
@@ -22,7 +20,7 @@ export type ShaderBuffer = {
 }
 
 export type ShaderBufferDefinition = {
-	data: BufferDataType | BufferDataTypeConstructor,
+	data?: BufferDataType | BufferDataTypeConstructor,
 	attribute?: string,
 	target?: WebGLRenderingContext["ARRAY_BUFFER"] | WebGLRenderingContext["ELEMENT_ARRAY_BUFFER"],
 	usage?: WebGLRenderingContext["STATIC_DRAW"] | WebGLRenderingContext["DYNAMIC_DRAW"] | WebGLRenderingContext["STREAM_DRAW"],
@@ -66,9 +64,9 @@ export class Shader {
 		return source;
 	}
 
-	private async loadShader(type: number, url: string) {
+	private async loadShader(type: number, url: string): Promise<WebGLShader> {
 		Log.info(`Shader-${this.name}`, `Loading shader: ${url}...`);
-		if (Shader.cache.has(url)) return Shader.cache.get(url);
+		if (Shader.cache.has(url)) return Shader.cache.get(url)!;
 
 		const source = this.preprocessShader(await FileUtils.load(`shaders/${url}.glsl`));
 		const shader = this.gl.createShader(type);

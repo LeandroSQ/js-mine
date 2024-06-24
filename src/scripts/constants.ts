@@ -8,6 +8,10 @@ export const SIMULATION_FREQUENCY = 60;
 export const SIMULATION_SUBSTEPS = 1;
 export const USE_ANIMATION_FRAME = true;
 
+// Chunk system
+export const CHUNK_SIZE = 16;
+export const CHUNK_HEIGHT = 32;
+
 // Gamepad
 export const GAMEPAD_DEADZONE = 0.1;
 export const GAMEPAD_LOOK_SENSITIVITY = 5.0;

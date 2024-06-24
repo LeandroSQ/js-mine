@@ -4,10 +4,10 @@ import { Log } from "../utils/log";
 import { Cursor } from "../utils/cursor";
 import { CursorType } from "../enums/cursor-type";
 import { InputHandler } from "../core/components/input-handler";
-import { Key } from "../enums/key";
 import { Gizmo } from "../utils/gizmo";
 import { Vector2 } from "../models/vector2";
 import { TextAlign } from "../enums/text-align";
+import { ChunkManager } from "../models/chunk-manager";
 
 export class StatePlay extends AState {
 
@@ -37,6 +37,13 @@ export class StatePlay extends AState {
 		Log.debug("StatePlay", "Setting up...");
 
 		if (!DEBUG) Cursor.set(CursorType.Hidden);
+
+		// Load the initial chunks
+		this.updateActiveChunks();
+	}
+
+	private updateActiveChunks() {
+		ChunkManager.updateActiveChunks(this.camera.tiledPosition);
 	}
 
 	async update(deltaTime: number) {
@@ -64,6 +71,8 @@ export class StatePlay extends AState {
 			this.camera.position[1] += right[1] * deltaTime * movementSpeed * movementX;
 			this.camera.position[2] += right[2] * deltaTime * movementSpeed * movementX;
 		}
+
+		if (movementX !== 0 || movementY !== 0) this.updateActiveChunks();
 
 		if (InputHandler.isCrouching()) {
 			this.camera.position[1] -= deltaTime * movementSpeed;

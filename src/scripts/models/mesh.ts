@@ -1,15 +1,15 @@
 import { mat4 } from 'gl-matrix';
 import { Shader } from "./shader";
 import { Texture } from './texture';
+import { Vector3 } from './vector3';
 
 export class Mesh {
 
 	private shader: Shader;
-	private static texture: Texture;
-	public matrix: mat4;
 
 	constructor(
 		private gl: WebGLContext,
+		public position: Vector3,
 		private vertices: Float32Array,
 		private uvs: Float32Array,
 		private normals: Float32Array,
@@ -18,9 +18,9 @@ export class Mesh {
 
 	public async setup() {
 		// All blocks will share the same texture, for now
-		if (!Mesh.texture) {
-			Mesh.texture = new Texture(this.gl);
-			await Mesh.texture.load("terrain");
+		if (!Texture.terrain) {
+			Texture.terrain = new Texture(this.gl);
+			await Texture.terrain.load("terrain");
 		}
 
 		// Setup the shader
@@ -51,23 +51,16 @@ export class Mesh {
 			}
 		});
 
-		// Create the model matrix
-		this.matrix = mat4.create();
-		mat4.translate(this.matrix, this.matrix, [-8.0, -10, -8.0]);
+		// mat4.translate(this.matrix, this.matrix, [-8.0, -10, -8.0]);
 	}
 
 	public render(projection: mat4, view: mat4) {
 		this.shader.bind();
-		Mesh.texture.bind();
+		Texture.terrain.bind();
 
 		// Rotate
-		const modelMatrix = mat4.create();/*  mat4.create();
-		const rad = Date.now() / 1000;
-		mat4.translate(modelMatrix, modelMatrix, [0.0, 0.0, -6.0]);
-		mat4.rotate(modelMatrix, modelMatrix, rad, [0.0, 1.0, 0.0]);
-		mat4.rotate(modelMatrix, modelMatrix, rad, [1.0, 0.0, 0.0]); */
-
-		mat4.copy(modelMatrix, this.matrix);
+		const modelMatrix = mat4.create();
+		mat4.translate(modelMatrix, modelMatrix, this.position.toMatrixVec3());
 
 		// Apply view to model
 		mat4.multiply(modelMatrix, view, modelMatrix);

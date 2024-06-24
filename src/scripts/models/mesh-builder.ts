@@ -1,20 +1,18 @@
-import { Size } from "../types/size";
-import { Mesh } from "./mesh";
-import { Vector3 } from "./vector3";
+import { Chunk } from "./chunk";
+import { Vector2 } from "./vector2";
 
 const indices = [
 	0, 1, 2,
 	0, 2, 3,
 ];
 
+// TODO: Move this to the terrain generator
 export class MeshBuilder {
 
 	private vertices: number[] = [];
 	private normals: number[] = [];
 	private uvs: number[] = [];
 	private indices: number[] = [];
-
-	constructor(private gl: WebGLContext) { }
 
 	public addQuad(offset: number[], vertices: readonly number[], normals: readonly number[], uvs: readonly number[]) {
 		this.normals.push(...normals);
@@ -25,9 +23,9 @@ export class MeshBuilder {
 		this.vertices.push(...vertices.map((v, i) => v + offset[i % 3]));
 	}
 
-	public build(): Mesh {
-		return new Mesh(
-			this.gl,
+	public build(position: Vector2): Chunk {
+		return new Chunk(
+			position,
 			new Float32Array(this.vertices),
 			new Float32Array(this.uvs),
 			new Float32Array(this.normals),
