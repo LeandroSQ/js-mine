@@ -1,3 +1,5 @@
+import { vec3 } from "gl-matrix";
+
 export class Vector3 {
 
 	public x: number;
@@ -54,6 +56,10 @@ export class Vector3 {
 
 	public toArray(): number[] {
 		return [this.x, this.y, this.z];
+	}
+
+	public toMatrixVec3(): vec3 {
+		return vec3.fromValues(this.x, this.y, this.z);
 	}
 
 	public static distance(a: Vector3, b: Vector3): number {

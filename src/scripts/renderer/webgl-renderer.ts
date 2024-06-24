@@ -1,5 +1,5 @@
 /* eslint-disable max-statements */
-import { mat4 } from "gl-matrix";
+import { mat4, vec3, vec4 } from "gl-matrix";
 import { Main } from "../main";
 import { Size } from "../types/size";
 import { Log } from "../utils/log";
@@ -9,6 +9,7 @@ import { RenderingPipelineBuffer } from "../models/rendering-pipeline-buffer";
 import { ChunkManager } from "../models/chunk-manager";
 import { Chunk } from "../models/chunk";
 import { Gizmo3D } from "../utils/gizmo3d";
+import { Camera } from "../models/camera";
 
 export class WebGLRenderer {
 
@@ -19,7 +20,7 @@ export class WebGLRenderer {
 
 	private frameBuffer: RenderingPipelineBuffer;
 
-	constructor(private main: Main) {  }
+	constructor(private main: Main) {}
 
 	// #region Utility
 	public invalidate() {
@@ -70,11 +71,6 @@ export class WebGLRenderer {
 	}
 
 	private async setupMesh() {
-		// this.cube = new Cube(this.gl, CubeFace.GRASS, CubeFace.GRASS_SIDE, CubeFace.DIRT);
-		// this.cube = new Cube(this.gl, CubeFace.DIAMOND_ORE, CubeFace.DIAMOND_ORE, CubeFace.DIAMOND_ORE);
-		// await this.cube.setup();
-
-		// this.cubes = await TerrainGenerator.generateCubes(this.gl, 16, 1);
 		await Chunk.setup(this.gl);
 	}
 
@@ -104,21 +100,76 @@ export class WebGLRenderer {
 		const color = Color.decode(Theme.background, true);
 		this.clear(color);
 
-		// Matrixes
 		const projection = this.main.camera.getProjectionMatrix(this.main.screen);
 		const view = this.main.camera.getViewMatrix();
 
+		let playerProjection = this.main.playerCamera.getProjectionMatrix(this.main.screen);
+		let playerView = this.main.playerCamera.getViewMatrix();
+		let visible = false;
+
 		// Draw chunks
 		for (const chunk of ChunkManager.activeChunks) {
-			if (this.main.camera.isChunkInsideFrustum(view, projection, chunk)) {
+			if (visible) continue;
+			if (this.main.playerCamera.isChunkInsideFrustum(playerProjection, playerView, chunk)) {
 				this.main.analytics.notifyChunkVisible(chunk);
+				visible = true;
 				chunk.render(this.gl, projection, view);
 			}
 		}
 
+        this.renderDebugOverlay();
+
 		Gizmo3D.render(this.gl, projection, view);
 		Gizmo3D.clear();
-	}
+    }
+
+    private renderDebugOverlay() {
+        // Near plane
+        const nearPlane = mat4.create();
+        const camera = this.main.useDebugCamera ? this.main.playerCamera : this.main.debugCamera;
+        const near = camera.near;
+        const forward = camera.forward;
+        const up = camera.up;
+        const position = camera.position;
+        const cameraView = camera.getViewMatrix();
+        mat4.invert(cameraView, cameraView);
+
+        Gizmo3D.box(
+            position,
+            vec3.fromValues(0.5, 0.5, 0.5),
+            vec3.fromValues(Math.toRadians(camera.pitch), Math.toRadians(camera.yaw), Math.toRadians(camera.roll)),
+            this.main.useDebugCamera ? vec4.fromValues(1, 0, 0, 1) : vec4.fromValues(0, 0, 1, 1),
+            true
+        );
+
+        // Calculate the near plane, ensuring that the camera is looking at the center of the near plane
+        const nearCenter = vec3.create();
+        vec3.scaleAndAdd(nearCenter, position, forward, near);
+        vec3.scaleAndAdd(nearCenter, nearCenter, up, near / 2);
+        mat4.lookAt(nearPlane, position, nearCenter, up);
+
+        /* Gizmo3D.quad(
+            nearCenter,
+            vec3.fromValues(1, 1, 1),
+            vec4.fromValues(1, 1, 1, 1),
+            false
+        ); */
+
+        // Forward
+        const forwardEnd = vec3.create();
+        vec3.scaleAndAdd(forwardEnd, position, forward, 100);
+        Gizmo3D.line(
+            position,
+            forwardEnd,
+            vec4.fromValues(1, 1, 1, 1)
+        );
+
+        /* Gizmo3D.frustum(
+            this.main.useDebugCamera ? this.main.playerCamera : this.main.debugCamera,
+            vec4.fromValues(0, 1, 0, 1),
+            true
+        ); */
+    }
 
 	public render() {
 		if (!this.isDirty) return;

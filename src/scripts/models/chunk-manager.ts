@@ -17,8 +17,8 @@ export abstract class ChunkManager {
 	}
 
 	public static updateActiveChunks(tiledPosition: Vector2) {
-		Log.debug("ChunkManager", "Updating active chunks... at " + tiledPosition.toString());
-		const diameter = 3;
+		// Log.debug("ChunkManager", "Updating active chunks... at " + tiledPosition.toString());
+		const diameter = 2;
 
 		const rect = new Rectangle(
 			tiledPosition.x - diameter / 2,

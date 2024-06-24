@@ -24,7 +24,7 @@ vec3 applySaturation(vec3 color, float saturation) {
 }
 
 void main() {
-	#ifdef SPLIT
+	#ifdef SPLIT_
 		// No effect on the left side
 		if (v_texcoord.x < 0.5) {
 			fragColor = texture(u_texture, v_texcoord);

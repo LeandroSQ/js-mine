@@ -1,5 +1,5 @@
 import { FrameBuffer } from "./frame-buffer";
-import { Quad } from "./quad";
+import { Quad } from "./shapes/quad";
 import { Shader } from "./shader";
 
 export class RenderingPipelineBuffer {
@@ -23,6 +23,7 @@ export class RenderingPipelineBuffer {
 	}
 
 	public async addFilter(name: string) {
+		const invertY = this.filters.length % 2 === 0;
 		const filter = new Shader(this.gl, `filter-${name}`);
 		await filter.setup({
 			source: {
@@ -32,7 +33,7 @@ export class RenderingPipelineBuffer {
 			uniforms: ["u_texture"],
 			buffers: {
 				vertex: {
-					data: Quad.vertices,
+					data: Quad.vertices.map(x => invertY ? -x : x),
 					attribute: "a_position"
 				},
 				uv: {

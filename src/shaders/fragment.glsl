@@ -10,7 +10,7 @@ in vec2 v_texCoord;
 out vec4 fragColor;
 
 void main() {
-	vec3 lightDirection = normalize(vec3(0.0, -1.0, 0.0));
+	vec3 lightDirection = normalize(vec3(2.0, 6.0, 0.0));
 	vec3 lightColor = vec3(0.97f, 0.88f, 0.77f);
 	vec3 shadowColor = vec3(0.09f, 0.09f, 0.18f);
     float lightIntensity = max(pow(max(dot(v_normal, lightDirection), 0.0), 2.0), 0.35);

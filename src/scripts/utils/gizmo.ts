@@ -15,11 +15,11 @@ interface IGizmo {
 
 class StrokeRectangleGizmo implements IGizmo {
 
-	constructor(private rect: Rectangle, private color: string) { }
+	constructor(private rect: Rectangle, private color: string, private thickness: number) { }
 
 	public render(ctx: CanvasRenderingContext2D) {
 		ctx.strokeStyle = this.color;
-		ctx.lineWidth = 1;
+		ctx.lineWidth = this.thickness;
 		ctx.strokeRect(this.rect.x, this.rect.y, this.rect.width, this.rect.height);
 	}
 
@@ -376,64 +376,64 @@ class GamepadGizmo implements IGizmo {
 
 }
 
-export class Gizmo {
+export abstract class Gizmo {
 
-	static list: IGizmo[] = [];
+	private static list: Array<IGizmo> = [];
 
 	static render(ctx: CanvasRenderingContext2D) {
 		if (!DEBUG) return;
 
 		ctx.save();
-		for (const gizmo of Gizmo.list) gizmo.render(ctx);
+		for (const gizmo of this.list) gizmo.render(ctx);
 		ctx.restore();
 	}
 
 	static clear() {
 		if (!DEBUG) return;
 
-		Gizmo.list = [];
+		this.list = [];
 	}
 
 	static rect(rect: Rectangle, color = "#fff") {
 		if (!DEBUG) return;
 
-		Gizmo.list.push(new RectangleGizmo(rect, color));
+		this.list.push(new RectangleGizmo(rect, color));
 	}
 
-	static outline(rect: Rectangle, color = "#fff") {
+	static outline(rect: Rectangle, color = "#fff", thickness = 1) {
 		if (!DEBUG) return;
 
-		Gizmo.list.push(new StrokeRectangleGizmo(rect, color));
+		this.list.push(new StrokeRectangleGizmo(rect, color, thickness));
 	}
 
 	static line(start: Vector2, end: Vector2, color = "#fff", thickness = 1) {
 		if (!DEBUG) return;
 
-		Gizmo.list.push(new LineGizmo(start, end, color, thickness));
+		this.list.push(new LineGizmo(start, end, color, thickness));
 	}
 
 	static circle(center: Vector2, radius: number, color = "#fff", fill = true) {
 		if (!DEBUG) return;
 
-		Gizmo.list.push(new CircleGizmo(center, radius, color, fill));
+		this.list.push(new CircleGizmo(center, radius, color, fill));
 	}
 
 	static text(text: string, position: Vector2, color = "#fff", alignment: CanvasTextAlign = "left") {
 		if (!DEBUG) return;
 
-		Gizmo.list.push(new TextGizmo(text, position, color, alignment));
+		this.list.push(new TextGizmo(text, position, color, alignment));
 	}
 
 	static arrow(origin: Vector2, vector: Vector2, color = "#fff") {
 		if (!DEBUG) return;
 
-		Gizmo.list.push(new VectorGizmo(origin, vector, color));
+		this.list.push(new VectorGizmo(origin, vector, color));
 	}
 
 	static gamepad(position: Vector2, buttons: Dictionary<GamepadInputState>, axes: Dictionary<number>) {
 		if (!DEBUG) return;
 
-		Gizmo.list.push(new GamepadGizmo(position, buttons, axes));
+		this.list.push(new GamepadGizmo(position, buttons, axes));
 	}
 
 }

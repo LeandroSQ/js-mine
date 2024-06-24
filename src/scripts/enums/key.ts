@@ -5,6 +5,7 @@ export enum Key {
 	S = "s",
 	D = "d",
 	R = "r",
+	C = "c",
 	Shift = "Shift",
 	ArrowUp = "ArrowUp",
 	ArrowDown = "ArrowDown",

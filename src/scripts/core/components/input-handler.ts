@@ -471,6 +471,10 @@ export abstract class InputHandler {
 	public static isRecording() {
 		return this.isKeyJustReleased(Key.R);
 	}
+
+	public static isSwitchingCameras() {
+		return this.isKeyJustReleased(Key.C);
+	}
 	// #endregion
 
 	public static vibrate() {

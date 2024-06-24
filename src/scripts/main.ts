@@ -14,21 +14,28 @@ import { GUIRenderer } from "./renderer/gui-renderer";
 import { Size } from "./types/size";
 import { WebGLRenderer } from "./renderer/webgl-renderer";
 import { Camera } from "./models/camera";
-import { Key } from "./enums/key";
 import { GIFUtils } from "./utils/gif";
 import { Vector2 } from "./models/vector2";
+import { vec3 } from "gl-matrix";
+
+const SKIP_WEBGL = false;
 
 export class Main {
 
 	// Graphics
 	public screen: Size = { width: 0, height: 0 };
 	public gui = new GUIRenderer(this);
-	public camera = new Camera();
 	public gl = new WebGLRenderer(this);
+
+	public playerCamera = new Camera();
+	public debugCamera = new Camera();
+	public useDebugCamera = false;
+	public get camera() {
+		return this.useDebugCamera ? this.debugCamera : this.playerCamera;
+	}
 
 	// Recording
 	private isRecording = false;
-	private recordingTimer = 0;
 
 	// Frame
 	private handleAnimationFrameRequest = -1;
@@ -36,7 +43,7 @@ export class Main {
 
 	// Misc
 	public globalTimer = 0;
-	private analytics: Analytics;
+	public analytics: Analytics;
 
 	// Game logic
 	public state: AState;
@@ -44,6 +51,9 @@ export class Main {
 	constructor() {
 		Log.info("Main", "Starting up...");
 		this.state = new StatePlay(this);
+
+		this.debugCamera.position = vec3.fromValues(0, 0, -10);
+
 		this.attachHooks();
 	}
 
@@ -60,7 +70,7 @@ export class Main {
 		try {
 			Log.debug("Main", "Window loaded");
 
-			await this.gl.setup();
+			if (!SKIP_WEBGL) await this.gl.setup();
 			this.gui.setup();
 
 			// Setup canvas
@@ -133,7 +143,7 @@ export class Main {
 
 		// Resize canvas
 		this.gui.setSize(this.screen);
-		this.gl.setSize(this.screen);
+		if (!SKIP_WEBGL) this.gl.setSize(this.screen);
 		this.invalidate();
 	}
 	// #endregion
@@ -150,7 +160,7 @@ export class Main {
 	// #region Frame
 	public invalidate() {
 		this.gui.invalidate();
-		this.gl.invalidate();
+		if (!SKIP_WEBGL) this.gl.invalidate();
 	}
 
 	private requestNextFrame() {
@@ -169,7 +179,7 @@ export class Main {
 			Gizmo.circle(new Vector2(this.screen.width - 30, 30), 15, "red", false);
 		}
 
-		if (InputHandler.isKeyJustReleased(Key.Space)) {
+		if (InputHandler.isRecording()) {
 			if (this.isRecording) {
 				this.onStopRecording();
 			} else {
@@ -185,7 +195,7 @@ export class Main {
 		// Resize canvas
 		this.screen = RECORDING_VIEWPORT;
 		this.gui.setSize(this.screen);
-		this.gl.setSize(this.screen);
+		if (!SKIP_WEBGL) this.gl.setSize(this.screen);
 		this.invalidate();
 	}
 
@@ -223,16 +233,18 @@ export class Main {
 		if (DEBUG) this.analytics.startFrame(time);
 		this.gui.render();
 		this.state.render(this.gui.context);
-		if (DEBUG) this.analytics.render(this.gui.context);
-		if (DEBUG) this.analytics.endFrame();
 
-		// GL
-		this.gl.render();
+		// WebGL
+		if (!SKIP_WEBGL) this.gl.render();
 
+		// GIF
 		if (this.isRecording) GIFUtils.addFrame(this.gl.canvas, this.gui.canvas.element);
 
 		Gizmo.render(this.gui.context);
 		Gizmo.clear();
+
+		if (DEBUG) this.analytics.render(this.gui.context);
+		if (DEBUG) this.analytics.endFrame();
 
 		this.requestNextFrame();
 	}

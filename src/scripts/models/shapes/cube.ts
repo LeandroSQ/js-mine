@@ -1,4 +1,4 @@
-import { Mesh } from "./mesh";
+import { Mesh } from "./../mesh";
 
 const decode = (col: number, row: number): number => {
 	return (row + 1) * 16 + col;
@@ -9,7 +9,9 @@ export enum CubeFace {
 	GRASS = decode(0, 0),
 	GRASS_SIDE = decode(3, 0),
 	DIAMOND_ORE = decode(2, 3),
-	STONE = decode(1, 0)
+	STONE = decode(1, 0),
+	SAND = decode(2, 1),
+	SNOW = decode(2, 4),
 };
 
 export class Cube extends Mesh {

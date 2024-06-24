@@ -68,10 +68,10 @@ export class Mesh {
 		// Set the matrix
 		this.shader.setUniform("u_modelView", modelMatrix);
 		this.shader.setUniform("u_projection", projection);
-		this.shader.setUniform("u_texture", 0);
+		this.shader.setUniform("u_texture", 0);// TODO: Check if this can be moved to setup
 
 		// Draw the mesh
-		this.shader.bindBuffer("index", this.indices);
+		this.shader.bindBuffer("index", this.indices);// TODO: Check if this can be moved to setup
 		this.gl.drawElements(this.gl.TRIANGLES, this.indices.length, this.gl.UNSIGNED_SHORT, 0);
 	}
 

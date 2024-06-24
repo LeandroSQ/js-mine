@@ -8,6 +8,7 @@ import { Gizmo } from "../utils/gizmo";
 import { Vector2 } from "../models/vector2";
 import { TextAlign } from "../enums/text-align";
 import { ChunkManager } from "../models/chunk-manager";
+import { Rectangle } from "../models/rectangle";
 
 export class StatePlay extends AState {
 
@@ -43,7 +44,7 @@ export class StatePlay extends AState {
 	}
 
 	private updateActiveChunks() {
-		ChunkManager.updateActiveChunks(this.camera.tiledPosition);
+		ChunkManager.updateActiveChunks(this.main.playerCamera.tiledPosition);
 	}
 
 	async update(deltaTime: number) {
@@ -51,20 +52,33 @@ export class StatePlay extends AState {
 		const movementSpeed = 5;
 		const rotationSpeed = 20;
 
+		if (DEBUG && InputHandler.isSwitchingCameras()) {
+			Log.debug("StatePlay", `Switching cameras... to ${this.main.useDebugCamera ? "player" : "debug"}`);
+			this.main.useDebugCamera = !this.main.useDebugCamera;
+			if (this.main.useDebugCamera) {
+				this.main.debugCamera.lookAt(this.main.playerCamera.position);
+			}/*  else {
+				this.main.playerCamera.lookAt(this.main.debugCamera.position);
+			} */
+		}
+
+		this.camera.update(deltaTime);
+
+		// Look
 		this.camera.pitch -= InputHandler.getLookVertical() * deltaTime * rotationSpeed;
 		this.camera.pitch = Math.clamp(this.camera.pitch, -89, 89);
 		this.camera.yaw += InputHandler.getLookHorizontal() * deltaTime * rotationSpeed;
 
+		// Move
 		const movementY = InputHandler.getMovementVertical();
 		const movementX = InputHandler.getMovementHorizontal();
-
+		if (movementX !== 0 || movementY !== 0) this.updateActiveChunks();
 		if (movementY !== 0) {
 			const forward = this.camera.forward;
 			this.camera.position[0] -= forward[0] * deltaTime * movementSpeed * movementY;
 			this.camera.position[1] -= forward[1] * deltaTime * movementSpeed * movementY;
 			this.camera.position[2] -= forward[2] * deltaTime * movementSpeed * movementY;
 		}
-
 		if (movementX !== 0) {
 			const right = this.camera.right;
 			this.camera.position[0] += right[0] * deltaTime * movementSpeed * movementX;
@@ -72,13 +86,20 @@ export class StatePlay extends AState {
 			this.camera.position[2] += right[2] * deltaTime * movementSpeed * movementX;
 		}
 
-		if (movementX !== 0 || movementY !== 0) this.updateActiveChunks();
-
 		if (InputHandler.isCrouching()) {
 			this.camera.position[1] -= deltaTime * movementSpeed;
 		}
 		if (InputHandler.isJumping()) {
 			this.camera.position[1] += deltaTime * movementSpeed;
+		}
+
+		if (this.main.useDebugCamera) {
+			const thickness = 10;
+			Gizmo.outline(
+				new Rectangle(thickness, thickness, this.width - thickness * 2, this.height - thickness * 2),
+				"#ff0000",
+				thickness
+			);
 		}
 
 		Gizmo.text("Position", new Vector2(this.width / 2, this.height - 80), "gray", TextAlign.Center);

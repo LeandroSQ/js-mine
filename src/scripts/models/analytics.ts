@@ -5,6 +5,8 @@ import { Rectangle } from "./rectangle";
 import { Log } from "../utils/log";
 import { Theme } from "../utils/theme";
 import { FONT_FAMILY, FONT_SIZE } from "../constants";
+import { Chunk } from "./chunk";
+import { ChunkManager } from "./chunk-manager";
 
 
 export class Analytics {
@@ -25,6 +27,10 @@ export class Analytics {
 	private currentMaxHeight = 1;
 	private targetMaxHeight = 1;
 
+	private activeChunkCount = 0;
+	private vertexCount = 0;
+	private triangleCount = 0;
+
 	private chart: number[] = [];
 
 	constructor(private main: Main) { }
@@ -38,6 +44,12 @@ export class Analytics {
 		}
 	}
 
+	public notifyChunkVisible(chunk: Chunk) {
+		this.activeChunkCount++;
+		this.vertexCount += chunk.vertexCount;
+		this.triangleCount += chunk.triangleCount;
+	}
+
 	public clear() {
 		this.chart = [];
 	}
@@ -48,6 +60,10 @@ export class Analytics {
 
 	public startFrame(time: Optional<DOMHighResTimeStamp> = null) {
 		this.lastFrameTime = time ?? performance.now();
+
+		this.activeChunkCount = 0;
+		this.vertexCount = 0;
+		this.triangleCount = 0;
 	}
 
 	public endFrame() {
@@ -63,7 +79,7 @@ export class Analytics {
 	private calculateBounds(): Rectangle {
 		const padding = 15;
 		const width = 200;
-		const height = 125;
+		const height = 161;
 
 		const x = padding;
 		const y = padding;
@@ -110,6 +126,12 @@ export class Analytics {
 		ctx.fillText(`Max: ${Math.prettifyElapsedTime(max)}`, x, y);
 		y += this.lineHeight;
 		ctx.fillText(`Last: ${Math.prettifyElapsedTime(last)}`, x, y);
+		y += this.lineHeight;
+		ctx.fillText(`Chunks: ${this.activeChunkCount} of ${ChunkManager.activeChunks.length}`, x, y);
+		y += this.lineHeight;
+		ctx.fillText(`Vertices: ${this.vertexCount}`, x, y);
+		y += this.lineHeight;
+		ctx.fillText(`Triangles: ${this.triangleCount}`, x, y);
 		y += this.lineHeight;
 	}
 

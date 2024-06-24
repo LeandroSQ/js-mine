@@ -66,7 +66,10 @@ export class Shader {
 
 	private async loadShader(type: number, url: string): Promise<WebGLShader> {
 		Log.info(`Shader-${this.name}`, `Loading shader: ${url}...`);
-		if (Shader.cache.has(url)) return Shader.cache.get(url)!;
+		if (Shader.cache.has(url)) {
+			Log.debug(`Shader-${this.name}`, `Shader cached!`);
+			return Shader.cache.get(url)!;
+		}
 
 		const source = this.preprocessShader(await FileUtils.load(`shaders/${url}.glsl`));
 		const shader = this.gl.createShader(type);

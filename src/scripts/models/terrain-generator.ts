@@ -1,5 +1,5 @@
 import { Optional } from './../types/optional';
-import { Cube, CubeFace } from "./cube";
+import { Cube, CubeFace } from "./shapes/cube";
 import { MeshBuilder } from "./mesh-builder";
 import { Vector3 } from "./vector3";
 import { createNoise2D, NoiseFunction2D } from 'simplex-noise';
@@ -58,7 +58,7 @@ export abstract class TerrainGenerator {
 	}
 
 	public static generateChunk(position: Vector2): Chunk {
-		Log.debug("TerrainGenerator", "Generating chunk... at " + position.toString());
+		// Log.debug("TerrainGenerator", "Generating chunk... at " + position.toString());
 		const meshBuilder = new MeshBuilder();
 
 		// Generate the cubes
