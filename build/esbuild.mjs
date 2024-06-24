@@ -61,8 +61,17 @@ export function buildPipe() {
 	stream._flush = function (callback) {
 		esbuild.build(options)
 			.then(result => {
-				if (!result?.outputFiles) return callback(new Error("No output file found"), result.outputFiles);
+				if (result.errors.length > 0) {
+					// Continue with warnings
+					console.error("Errors:");
+					for (const error of result.errors) {
+						console.error(error);
+					}
 
+					return callback(null);
+				}
+
+				if (!result?.outputFiles) return callback(new Error("No output file found"), result.outputFiles);
 				for (const file of result.outputFiles) {
 					stream.push(new Vinyl({
 						path: file.path,
@@ -72,7 +81,7 @@ export function buildPipe() {
 
 				callback(null);
 			})
-			.catch((err) => callback(err));
+			.catch((err) => callback(null));
 	};
 
 	return stream;

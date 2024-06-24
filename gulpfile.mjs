@@ -74,7 +74,7 @@ function handleTs() {
 }
 
 function watchTs() {
-	return watch("src/scripts/**/*.ts", debounce(handleTs, 250));
+	return watch("src/scripts/**/*.ts", handleTs);
 }
 
 function handleShaders() {
