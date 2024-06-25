@@ -16,7 +16,7 @@ export abstract class ImageUtils {
 			}
 
 			const image = new Image();
-			image.src = `${window.location.href}/assets/images/${id}.png`;
+			image.src = `${window.location.href}assets/images/${id}.png`;
 			image.crossOrigin = "anonymous";
 			image.style.display = "none";
 			image.id = `image-${id}`;
