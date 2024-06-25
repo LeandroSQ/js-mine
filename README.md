@@ -10,7 +10,7 @@ WebGL minecraft-like concept.
 </center> -->
 
 <p align="center">
-	<a href="https://leandrosq.github.io/js-mine/">Live demo here</a>
+	<a href="https://leandrosq.github.io/js-mine/">Live demo here [Soon]</a>
 </p>
 
 ## Devlog
