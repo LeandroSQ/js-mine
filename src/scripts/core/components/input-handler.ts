@@ -53,11 +53,14 @@ export abstract class InputHandler {
 	// #region Event handlers
 	private static onKeyDown(event: KeyboardEvent) {
 		if (event.repeat) return;
-		if (!Object.values(Key).includes(event.key as Key)) return;
 
-		if (this.VERBOSE_KEYBOARD) Log.debug("Input", `Key down: ${event.key}`);
+		const key = event.key.toLowerCase();// Apparently when holding shift the key is uppercase... so this solves that
 
-		this.keys[event.key] = {
+		if (!Object.values(Key).includes(key as Key)) return;
+
+		if (this.VERBOSE_KEYBOARD) Log.debug("Input", `Key down: ${key}`);
+
+		this.keys[key] = {
 			active: true,
 			lastChange: Date.now(),
 			lastTrigger: Date.now(),
@@ -73,11 +76,13 @@ export abstract class InputHandler {
 
 	private static onKeyUp(event: KeyboardEvent) {
 		if (event.repeat) return;
-		if (!Object.values(Key).includes(event.key as Key)) return;
 
-		if (this.VERBOSE_KEYBOARD) Log.debug("Input", `Key up: ${event.key}`);
+		const key = event.key.toLowerCase();// Apparently when holding shift the key is uppercase... so this solves that
 
-		const obj = this.keys[event.key];
+		if (this.VERBOSE_KEYBOARD) Log.debug("Input", `Key up: ${key}`);
+		if (!Object.values(Key).includes(key as Key)) return;
+
+		const obj = this.keys[key];
 		if (!obj) return;
 		obj.active = false;
 		obj.lastChange = Date.now();
@@ -110,6 +115,7 @@ export abstract class InputHandler {
 	public static readonly mouseButtons: Dictionary<InputState> = {};
 	public static mouseWheelDelta = 0;
 
+	private static readonly REQUIRE_LOCK_TO_MOVE = true as const;
 	private static readonly POINTER_LOCK_REQUEST_INTERVAL = 1000 as const;
 	private static lastPointerLockTime = 0;
 	private static lastPointerLockTimeoutHandle = -1;
@@ -142,6 +148,8 @@ export abstract class InputHandler {
 
 	// #region Event handlers
 	private static onMouseMove(event: MouseEvent) {
+		if (this.REQUIRE_LOCK_TO_MOVE && !document.pointerLockElement) return;
+
 		if (this.VERBOSE_MOUSE) Log.debug("Input", `Mouse move: ${event.clientX}, ${event.clientY}`);
 
 		this.mouseDelta.x = event.movementX;
@@ -474,6 +482,10 @@ export abstract class InputHandler {
 
 	public static isSwitchingCameras() {
 		return this.isKeyJustReleased(Key.C);
+	}
+
+	public static isRunning(): boolean {
+		return this.isKeyDown(Key.Ctrl) || this.isGamepadButtonDown(GamepadButton.RT);
 	}
 	// #endregion
 
