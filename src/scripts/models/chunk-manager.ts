@@ -6,6 +6,7 @@ import { TerrainGenerator } from "./terrain-generator";
 import { Vector2 } from "./vector2";
 import { Vector3 } from "./vector3";
 import { Log } from '../utils/log';
+import { SETTINGS } from '../settings';
 
 export abstract class ChunkManager {
 
@@ -18,30 +19,42 @@ export abstract class ChunkManager {
 
 	public static updateActiveChunks(tiledPosition: Vector2) {
 		// Log.debug("ChunkManager", "Updating active chunks... at " + tiledPosition.toString());
-		const diameter = 2;
-
 		const rect = new Rectangle(
-			tiledPosition.x - diameter / 2,
-			tiledPosition.y - diameter / 2,
-			diameter,
-			diameter
+			tiledPosition.x - SETTINGS.RENDER_DISTANCE / 2,
+			tiledPosition.y - SETTINGS.RENDER_DISTANCE / 2,
+			SETTINGS.RENDER_DISTANCE,
+			SETTINGS.RENDER_DISTANCE
 		);
 
+		let generated = 0;
+
 		const list: Array<Chunk> = [];
+		// On a rect
 		for (let x = rect.x; x < rect.x + rect.width; x++) {
 			for (let z = rect.y; z < rect.y + rect.height; z++) {
+				if (!this.chunks[this.hash(x, z)]) {
+					generated++;
+
+					if (generated > 1) continue;
+				}
+
 				const chunk = this.getChunk(x, z);
 				list.push(chunk);
 			}
 		}
+
 		this.activeChunks = list;
 	}
 
 	public static getChunk(x: number, z: number): Chunk {
-		const chunk = this.chunks[this.hash(x, z)];
-		if (chunk) return chunk;
+		const key = this.hash(x, z);
+		let chunk = this.chunks[key];
+		if (!chunk) {
+			chunk = TerrainGenerator.generateChunk(new Vector2(x, z));
+			this.chunks[key] = chunk;
+		}
 
-		return TerrainGenerator.generateChunk(new Vector2(x, z));
+		return chunk;
 	}
 
 	public static setChunk(x: number, z: number, chunk: Chunk) {

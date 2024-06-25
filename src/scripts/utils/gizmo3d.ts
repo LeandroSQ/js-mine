@@ -56,8 +56,41 @@ class GizmoMesh {
 
 class BoxGizmo3D implements IGizmo3D {
 
+	// TODO: Move this to Cube.ts
+	private static readonly outlineVertices = new Float32Array([
+		// Front face
+		-0.5, -0.5, -0.5,  // Bottom-left
+		0.5, -0.5, -0.5,   // Bottom-right
+		0.5, 0.5, -0.5,    // Top-right
+		-0.5, 0.5, -0.5,   // Top-left
+
+		// Bottom face
+		-0.5, -0.5, -0.5,  // Bottom-left-front
+		0.5, -0.5, -0.5,   // Bottom-right-front
+		0.5, -0.5, 0.5,    // Bottom-right-back
+		-0.5, -0.5, 0.5,   // Bottom-left-back
+
+		// Left face
+		-0.5, -0.5, -0.5,  // Bottom-front
+		-0.5, 0.5, -0.5,   // Top-front
+		-0.5, 0.5, 0.5,    // Top-back
+		-0.5, -0.5, 0.5,   // Bottom-back
+
+		// Back face
+		0.5, -0.5, 0.5,    // Bottom-right
+		0.5, 0.5, 0.5,     // Top-right
+		-0.5, 0.5, 0.5,    // Top-left
+		-0.5, -0.5, 0.5,    // Bottom-left
+
+		// right face
+		0.5, -0.5, -0.5,  // Bottom-front
+		0.5, 0.5, -0.5,   // Top-front
+		0.5, 0.5, 0.5,    // Top-back
+		0.5, -0.5, 0.5,   // Bottom-back
+	]);
 	private static mesh: GizmoMesh;
 	private modelMatrix = mat4.create();
+	private vertices: Float32Array;
 
 	constructor(private position: vec3, private size: vec3, private rotation: vec3, private color: vec4, private fill: boolean) {
 		mat4.translate(this.modelMatrix, this.modelMatrix, this.position);
@@ -65,6 +98,10 @@ class BoxGizmo3D implements IGizmo3D {
 		mat4.rotateX(this.modelMatrix, this.modelMatrix, this.rotation[0]);
 		mat4.rotateY(this.modelMatrix, this.modelMatrix, this.rotation[1]);
 		mat4.rotateZ(this.modelMatrix, this.modelMatrix, this.rotation[2]);
+
+		if (!this.fill) {
+			this.vertices = new Float32Array(BoxGizmo3D.outlineVertices);
+		}
 	}
 
 	static async setup(gl: WebGLContext) {
@@ -74,7 +111,13 @@ class BoxGizmo3D implements IGizmo3D {
 
 	render(gl: WebGLContext, projection: mat4, view: mat4) {
 		BoxGizmo3D.mesh.bind(gl, this.color, this.modelMatrix, view, projection);
-		gl.drawElements(this.fill ? GL.TRIANGLES : GL.LINE_STRIP, BoxGizmo3D.mesh.indices!.length, GL.UNSIGNED_SHORT, 0);
+		if (this.fill) {
+			BoxGizmo3D.mesh.shader.bindBuffer("vertex", Cube.vertices);
+			gl.drawElements(GL.TRIANGLES, BoxGizmo3D.mesh.indices!.length, GL.UNSIGNED_SHORT, 0);
+		} else {
+			BoxGizmo3D.mesh.shader.bindBuffer("vertex", this.vertices);
+			gl.drawArrays(this.fill ? GL.TRIANGLES : GL.LINE_LOOP, 0, this.vertices.length / 3);
+		}
 	}
 
 }
@@ -110,44 +153,54 @@ class FrustumGizmo3D implements IGizmo3D {
 	private indices: Uint16Array;
 
 	constructor(camera: Camera, private color: vec4, private fill: boolean) {
-		mat4.translate(this.modelMatrix, this.modelMatrix, camera.position);
-		mat4.rotate(this.modelMatrix, this.modelMatrix, Math.toRadians(camera.pitch), [1, 0, 0]);
-		mat4.rotate(this.modelMatrix, this.modelMatrix, Math.toRadians(camera.yaw), [0, 1, 0]);
-		mat4.rotate(this.modelMatrix, this.modelMatrix, Math.toRadians(camera.roll), [0, 0, 1]);
-		// mat4.rotateX(this.modelMatrix, this.modelMatrix, Math.toRadians(camera.yaw));
-		// mat4.rotateY(this.modelMatrix, this.modelMatrix, Math.toRadians(camera.pitch));
-		// mat4.rotateZ(this.modelMatrix, this.modelMatrix, Math.toRadians(camera.roll));
-		const aspect = window.innerWidth / window.innerHeight;
-		const near = camera.near;
-		const far = camera.far;
+		const viewMatrix = camera.getViewMatrix();
+		const projectionMatrix = camera.getProjectionMatrix();
+		const viewProjectionMatrix = mat4.multiply(mat4.create(), projectionMatrix, viewMatrix);
+		const inverseViewProjectionMatrix = mat4.invert(mat4.create(), viewProjectionMatrix);
 
-		const tan = Math.tan(camera.fov / 2);
-		const nearHeight = tan * near;
-		const nearWidth = nearHeight * aspect;
-		const farHeight = tan * far;
-		const farWidth = farHeight * aspect;
+		// Frustum corners in clip space
+		// TODO: Move this to Frustum.ts
+		const clipSpaceCorners = [
+			// Near plane
+			vec4.fromValues(-1, -1, -1, 1),
+			vec4.fromValues(1, -1, -1, 1),
+			vec4.fromValues(1, 1, -1, 1),
+			vec4.fromValues(-1, 1, -1, 1),
+			// Far plane
+			vec4.fromValues(-1, -1, 1, 1),
+			vec4.fromValues(1, -1, 1, 1),
+			vec4.fromValues(1, 1, 1, 1),
+			vec4.fromValues(-1, 1, 1, 1)
+		];
+
+		// Frustum corners in world space
+		const worldSpaceCorners = clipSpaceCorners.map(corner => {
+			const worldSpaceCorner = vec4.transformMat4(vec4.create(), corner, inverseViewProjectionMatrix);
+			vec4.scale(worldSpaceCorner, worldSpaceCorner, 1 / worldSpaceCorner[3]);
+			// TODO: Check if this is correct
+			return worldSpaceCorner;
+		});
 
 		this.vertices = new Float32Array([
 			// Near plane
-			-nearWidth, -nearHeight, -near,
-			nearWidth, -nearHeight, -near,
-			nearWidth, nearHeight, -near,
-			-nearWidth, nearHeight, -near,
+			...worldSpaceCorners[0],
+			...worldSpaceCorners[1],
+			...worldSpaceCorners[2],
+			...worldSpaceCorners[3],
 			// Far plane
-			-farWidth, -farHeight, -far,
-			farWidth, -farHeight, -far,
-			farWidth, farHeight, -far,
-			-farWidth, farHeight, -far,
-			// Connect near and far
-			-nearWidth, -nearHeight, -near,
-			-farWidth, -farHeight, -far,
-			nearWidth, -nearHeight, -near,
-			farWidth, -farHeight, -far,
-			nearWidth, nearHeight, -near,
-			farWidth, farHeight, -far,
-			-nearWidth, nearHeight, -near,
-			-farWidth, farHeight, -far
+			...worldSpaceCorners[4],
+			...worldSpaceCorners[5],
+			...worldSpaceCorners[6],
+			...worldSpaceCorners[7]
+		]);
 
+		this.indices = new Uint16Array([
+			0, 1, 2, 2, 3, 0, // Near plane
+			4, 5, 6, 6, 7, 4, // Far plane
+			0, 1, 5, 5, 4, 0, // Bottom plane
+			2, 3, 7, 7, 6, 2, // Top plane
+			0, 3, 7, 7, 4, 0, // Left plane
+			1, 2, 6, 6, 5, 1  // Right plane
 		]);
 	}
 
@@ -182,9 +235,9 @@ class FrustumGizmo3D implements IGizmo3D {
 		shader.setUniform("u_projection", projection);
 
 		shader.bindBuffer("vertex", this.vertices);
-		// shader.bindBuffer("index", this.indices);
-		// gl.drawArrays(GL.LINE_LOOP, 0, this.indices.length);
-		gl.drawArrays(GL.LINE_LOOP, 0, this.vertices.length / 3);
+		shader.bindBuffer("index", this.indices);
+
+		gl.drawElements(this.fill ? GL.TRIANGLES : GL.LINE_LOOP, this.indices.length, GL.UNSIGNED_SHORT, 0);
 	}
 
 }

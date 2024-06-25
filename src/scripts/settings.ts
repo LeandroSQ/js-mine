@@ -1,3 +1,12 @@
-export default {
-	
-};
+export const SETTINGS = {
+	// Rendering
+	RENDER_DISTANCE: 32,
+	RENDER_CHUNKS: true,
+	SORT_CHUNKS_BY_DISTANCE: true,
+	ANSIOTROPIC_FILTERING: 0,
+
+	// Debug
+	DISABLE_DEPTH_FOR_GIZMOS: false,
+	RENDER_CHUNK_BOUNDS: true
+
+} as const;

@@ -4,6 +4,7 @@ import { Vector2 } from "./vector2";
 import { CHUNK_HEIGHT, CHUNK_SIZE } from "../constants";
 import { Chunk } from "./chunk";
 import { Gizmo3D } from "../utils/gizmo3d";
+import { SETTINGS } from "../settings";
 
 export class Camera {
 
@@ -27,6 +28,11 @@ export class Camera {
 	}
 
 	// #region Utility
+	public get aspectRatio() {
+		// TODO: Get the aspect ratio from the screen
+		return window.innerWidth / window.innerHeight;
+	}
+
 	public get tiledPosition() {
 		return new Vector2(
 			Math.floor((this.position[0] + CHUNK_SIZE / 2) / CHUNK_SIZE),
@@ -84,79 +90,57 @@ export class Camera {
 	// #endregion
 
 	// #region Frustum culling
-	public getFrustumPlanes(view: mat4, projection: mat4): vec4[] {
-		const combinedMatrix = mat4.create();
-		mat4.multiply(combinedMatrix, projection, view);
+	private normalizePlane(plane: vec4) {
+		const length = Math.sqrt(plane[0] * plane[0] + plane[1] * plane[1] + plane[2] * plane[2]);
+		plane[0] /= length;
+		plane[1] /= length;
+		plane[2] /= length;
 
-		const planes: Array<vec4> = [];
 
-		// Right plane
-		planes.push(vec4.fromValues(
-			combinedMatrix[3] - combinedMatrix[0],
-			combinedMatrix[7] - combinedMatrix[4],
-			combinedMatrix[11] - combinedMatrix[8],
-			combinedMatrix[15] - combinedMatrix[12]
-		));
-
-		// Left plane
-		planes.push(vec4.fromValues(
-			combinedMatrix[3] + combinedMatrix[0],
-			combinedMatrix[7] + combinedMatrix[4],
-			combinedMatrix[11] + combinedMatrix[8],
-			combinedMatrix[15] + combinedMatrix[12]
-		));
-
-		// Top plane
-		planes.push(vec4.fromValues(
-			combinedMatrix[3] - combinedMatrix[1],
-			combinedMatrix[7] - combinedMatrix[5],
-			combinedMatrix[11] - combinedMatrix[9],
-			combinedMatrix[15] - combinedMatrix[13]
-		));
-
-		// Bottom plane
-		planes.push(vec4.fromValues(
-			combinedMatrix[3] + combinedMatrix[1],
-			combinedMatrix[7] + combinedMatrix[5],
-			combinedMatrix[11] + combinedMatrix[9],
-			combinedMatrix[15] + combinedMatrix[13]
-		));
-
-		// Near plane
-		planes.push(vec4.fromValues(
-			combinedMatrix[3] + combinedMatrix[2],
-			combinedMatrix[7] + combinedMatrix[6],
-			combinedMatrix[11] + combinedMatrix[10],
-			combinedMatrix[15] + combinedMatrix[14]
-		));
-
-		// Far plane
-		planes.push(vec4.fromValues(
-			combinedMatrix[3] - combinedMatrix[2],
-			combinedMatrix[7] - combinedMatrix[6],
-			combinedMatrix[11] - combinedMatrix[10],
-			combinedMatrix[15] - combinedMatrix[14]
-		));
-
-		return planes.map(x => vec4.normalize(x, x));
+		return plane;
 	}
 
-	public isCubeInsideFrustum(view: mat4, projection: mat4, position: vec3, size: vec3) {
-		const planes = this.getFrustumPlanes(view, projection);
+	public getFrustumPlanes(): vec4[] {
+		const view = this.getViewMatrix();
+		const projection = this.getProjectionMatrix();
+		const viewProjectionMatrix = mat4.multiply(mat4.create(), projection, view);
+
+		const planesData = [
+			vec4.fromValues(viewProjectionMatrix[3] + viewProjectionMatrix[0], viewProjectionMatrix[7] + viewProjectionMatrix[4], viewProjectionMatrix[11] + viewProjectionMatrix[8], viewProjectionMatrix[15] + viewProjectionMatrix[12]), // Left
+			vec4.fromValues(viewProjectionMatrix[3] - viewProjectionMatrix[0], viewProjectionMatrix[7] - viewProjectionMatrix[4], viewProjectionMatrix[11] - viewProjectionMatrix[8], viewProjectionMatrix[15] - viewProjectionMatrix[12]), // Right
+			vec4.fromValues(viewProjectionMatrix[3] + viewProjectionMatrix[1], viewProjectionMatrix[7] + viewProjectionMatrix[5], viewProjectionMatrix[11] + viewProjectionMatrix[9], viewProjectionMatrix[15] + viewProjectionMatrix[13]), // Bottom
+			vec4.fromValues(viewProjectionMatrix[3] - viewProjectionMatrix[1], viewProjectionMatrix[7] - viewProjectionMatrix[5], viewProjectionMatrix[11] - viewProjectionMatrix[9], viewProjectionMatrix[15] - viewProjectionMatrix[13]), // Top
+			vec4.fromValues(viewProjectionMatrix[3] + viewProjectionMatrix[2], viewProjectionMatrix[7] + viewProjectionMatrix[6], viewProjectionMatrix[11] + viewProjectionMatrix[10], viewProjectionMatrix[15] + viewProjectionMatrix[14]), // Near
+			vec4.fromValues(viewProjectionMatrix[3] - viewProjectionMatrix[2], viewProjectionMatrix[7] - viewProjectionMatrix[6], viewProjectionMatrix[11] - viewProjectionMatrix[10], viewProjectionMatrix[15] - viewProjectionMatrix[14])  // Far
+		];
+
+		return planesData.map(plane => vec4.normalize(vec4.create(), plane));
+	}
+
+	public isBoxInFrustum(position: vec3, size: vec3) {
+		const planes = this.getFrustumPlanes();
+
+		const halfSize = vec3.scale(vec3.create(), size, 0.5);
+		const min = vec3.subtract(vec3.create(), position, halfSize);
+		const max = vec3.add(vec3.create(), position, halfSize);
 
 		for (const plane of planes) {
 			const normal = vec3.fromValues(plane[0], plane[1], plane[2]);
-			const distance = vec3.dot(normal, position) + plane[3];
-			const radius = Math.abs(vec3.dot(normal, size));
+			const positive = vec3.fromValues(
+				normal[0] > 0 ? max[0] : min[0],
+				normal[1] > 0 ? max[1] : min[1],
+				normal[2] > 0 ? max[2] : min[2]
+			);
 
-			if (distance < -radius) return false;
+			const distance = vec3.dot(normal, positive) + plane[3];
+			if (distance < 0) return false;
 		}
 
 		return true;
 	}
 
-	public isSphereInsideFrustum(view: mat4, projection: mat4, position: vec3, radius: number) {
-		const planes = this.getFrustumPlanes(view, projection);
+	public isSphereInsideFrustum(position: vec3, radius: number) {
+		const planes = this.getFrustumPlanes();
 
 		for (const plane of planes) {
 			const distance = vec3.dot(vec3.fromValues(plane[0], plane[1], plane[2]), position) + plane[3];
@@ -167,8 +151,8 @@ export class Camera {
 		return true;
 	}
 
-	public isChunkInsideFrustum(view: mat4, projection: mat4, chunk: Chunk) {
-		const position = chunk.globalPosition;
+	public isChunkInsideFrustum(chunk: Chunk) {
+		const position = chunk.globalCenterPosition;
 
 		// Cube
 		const padding = 0;
@@ -176,45 +160,28 @@ export class Camera {
 		size[0] += padding;
 		size[1] += padding;
 		size[2] += padding;
-		position[0] += padding / 2 + CHUNK_SIZE / 2;
-		position[1] += padding / 2;
-		position[2] += padding / 2 + CHUNK_SIZE / 2;
-		const inside = this.isCubeInsideFrustum(view, projection, position, size);
-		Gizmo3D.box(
-			position,
-			size,
-			vec3.fromValues(0, 0, 0),
-			inside ? vec4.fromValues(0, 1, 0, 1.0) : vec4.fromValues(1, 0, 0, 1.0),
-			false
-		);
+		position[0] -= padding / 2;
+		position[1] -= padding / 2;
+		position[2] -= padding / 2;
+		const inside = this.isBoxInFrustum(position, size);
 
-		Gizmo3D.box(
-			position,
-			vec3.fromValues(1, 1, 1),
-			vec3.fromValues(0, 0, 0),
-			vec4.fromValues(0, 0, 1, 1.0),
-			true
-		);
+		if (SETTINGS.RENDER_CHUNK_BOUNDS) {
+			Gizmo3D.box(
+				chunk.globalCenterPosition,
+				size,
+				vec3.fromValues(0, 0, 0),
+				inside ? vec4.fromValues(0, 1, 0, 1.0) : vec4.fromValues(1, 0, 0, 1.0),
+				false
+			);
 
-		// Sphere
-		// const radius = CHUNK_SIZE / 2;
-		// position[0] += radius;
-		// position[1] += radius;
-		// position[2] += radius;
-		// const inside = this.isSphereInsideFrustum(
-		// 	view,
-		// 	projection,
-		// 	position,
-		// 	radius
-		// );
-		// Gizmo3D.sphere(position, radius, inside ? vec4.fromValues(0, 0, 0, 1.0) : vec4.fromValues(1, 1, 1, 1.0));
-
-		/* Gizmo3D.frustum(
-			this,
-			vec4.fromValues(1, 0, 0, 0.5),
-			false
-		); */
-
+			Gizmo3D.box(
+				chunk.globalCenterPosition,
+				vec3.fromValues(1, 1, 1),
+				vec3.fromValues(0, 0, 0),
+				vec4.fromValues(0, 0, 1, 1.0),
+				true
+			);
+		}
 
 		return inside;
 	}
@@ -239,10 +206,9 @@ export class Camera {
 		return viewMatrix;
 	}
 
-	public getProjectionMatrix(screen: Size) {
-		const aspectRatio = screen.width / screen.height;
+	public getProjectionMatrix() {
 		const projectionMatrix = mat4.create();
-		mat4.perspective(projectionMatrix, this.fov, aspectRatio, this.near, this.far);
+		mat4.perspective(projectionMatrix, this.fov, this.aspectRatio, this.near, this.far);
 
 		return projectionMatrix;
 	}

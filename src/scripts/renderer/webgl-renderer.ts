@@ -9,7 +9,7 @@ import { RenderingPipelineBuffer } from "../models/rendering-pipeline-buffer";
 import { ChunkManager } from "../models/chunk-manager";
 import { Chunk } from "../models/chunk";
 import { Gizmo3D } from "../utils/gizmo3d";
-import { Camera } from "../models/camera";
+import { SETTINGS } from "../settings";
 
 export class WebGLRenderer {
 
@@ -100,27 +100,44 @@ export class WebGLRenderer {
 		const color = Color.decode(Theme.background, true);
 		this.clear(color);
 
-		const projection = this.main.camera.getProjectionMatrix(this.main.screen);
+		const projection = this.main.camera.getProjectionMatrix();
 		const view = this.main.camera.getViewMatrix();
 
-		let playerProjection = this.main.playerCamera.getProjectionMatrix(this.main.screen);
-		let playerView = this.main.playerCamera.getViewMatrix();
-		let visible = false;
-
 		// Draw chunks
-		for (const chunk of ChunkManager.activeChunks) {
-			if (visible) continue;
-			if (this.main.playerCamera.isChunkInsideFrustum(playerProjection, playerView, chunk)) {
-				this.main.analytics.notifyChunkVisible(chunk);
-				visible = true;
+		let visibleChunks = ChunkManager.activeChunks.filter(chunk => this.main.playerCamera.isChunkInsideFrustum(chunk));
+		if (SETTINGS.SORT_CHUNKS_BY_DISTANCE) {
+			const distances = visibleChunks.map(chunk => vec3.distance(chunk.globalCenterPosition, this.main.playerCamera.position));
+			visibleChunks = visibleChunks.sort((a, b) => {
+				const distanceA = distances[visibleChunks.indexOf(a)];
+				const distanceB = distances[visibleChunks.indexOf(b)];
+				return distanceB - distanceA;
+			});
+		}
+
+
+		for (const chunk of visibleChunks) {
+			this.main.analytics.notifyChunkVisible(chunk);
+			if (SETTINGS.RENDER_CHUNKS) {
 				chunk.render(this.gl, projection, view);
 			}
 		}
 
+		/* const boxPosition = vec3.fromValues(0, 0, -3);
+		const boxSize = vec3.fromValues(1, 1, 1);
+		const boxRotation = vec3.fromValues(0, 0, 0);
+		const boxVisible = this.main.playerCamera.isBoxInFrustum(boxPosition, boxSize);
+		const boxColor = boxVisible ? vec4.fromValues(1.0, 1.0, 1.0, 1.0) : vec4.fromValues(1.0, 0, 1.0, 1.0);
+		Gizmo3D.box(boxPosition, boxSize, boxRotation, boxColor, true); */
+
         this.renderDebugOverlay();
+
+
+		if (SETTINGS.DISABLE_DEPTH_FOR_GIZMOS) this.gl.disable(GL.DEPTH_TEST);
 
 		Gizmo3D.render(this.gl, projection, view);
 		Gizmo3D.clear();
+
+		if (SETTINGS.DISABLE_DEPTH_FOR_GIZMOS) this.gl.enable(GL.DEPTH_TEST);
     }
 
     private renderDebugOverlay() {

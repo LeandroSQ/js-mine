@@ -9,6 +9,7 @@ import { Vector2 } from "../models/vector2";
 import { TextAlign } from "../enums/text-align";
 import { ChunkManager } from "../models/chunk-manager";
 import { Rectangle } from "../models/rectangle";
+import { vec3 } from "gl-matrix";
 
 export class StatePlay extends AState {
 
@@ -49,17 +50,19 @@ export class StatePlay extends AState {
 
 	async update(deltaTime: number) {
 		this.invalidate();
-		const movementSpeed = 5;
+		const movementSpeed = 5 * (InputHandler.isRunning() ? 10 : 1);
 		const rotationSpeed = 20;
 
 		if (DEBUG && InputHandler.isSwitchingCameras()) {
 			Log.debug("StatePlay", `Switching cameras... to ${this.main.useDebugCamera ? "player" : "debug"}`);
 			this.main.useDebugCamera = !this.main.useDebugCamera;
 			if (this.main.useDebugCamera) {
-				this.main.debugCamera.lookAt(this.main.playerCamera.position);
-			}/*  else {
-				this.main.playerCamera.lookAt(this.main.debugCamera.position);
-			} */
+				// this.main.debugCamera.lookAt(this.main.playerCamera.position);
+				vec3.copy(this.main.debugCamera.position, this.main.playerCamera.position);
+				this.main.debugCamera.pitch = this.main.playerCamera.pitch;
+				this.main.debugCamera.yaw = this.main.playerCamera.yaw;
+				this.main.debugCamera.roll = this.main.playerCamera.roll;
+			}
 		}
 
 		this.camera.update(deltaTime);
@@ -72,7 +75,7 @@ export class StatePlay extends AState {
 		// Move
 		const movementY = InputHandler.getMovementVertical();
 		const movementX = InputHandler.getMovementHorizontal();
-		if (movementX !== 0 || movementY !== 0) this.updateActiveChunks();
+		/* if (movementX !== 0 || movementY !== 0) */ this.updateActiveChunks();
 		if (movementY !== 0) {
 			const forward = this.camera.forward;
 			this.camera.position[0] -= forward[0] * deltaTime * movementSpeed * movementY;

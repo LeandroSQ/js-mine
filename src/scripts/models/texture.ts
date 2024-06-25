@@ -1,5 +1,6 @@
 import { Optional } from "../types/optional";
 import { ImageUtils } from "../utils/image";
+import { Log } from "../utils/log";
 
 export class Texture {
 
@@ -32,6 +33,8 @@ export class Texture {
 		// Wrapping
 		this.gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_S, GL.CLAMP_TO_EDGE);
 		this.gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_T, GL.CLAMP_TO_EDGE);
+
+		this.gl.enableAnisotropicFiltering();
 	}
 
 	bind() {

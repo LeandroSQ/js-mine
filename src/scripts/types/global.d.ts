@@ -53,6 +53,14 @@ declare global {
 		sequential<T>(promises: Promise<T>[]): Promise<T[]>;
 	}
 
+	interface WebGLRenderingContext {
+		enableAnisotropicFiltering: () => void;
+	}
+
+	interface WebGL2RenderingContext {
+		enableAnisotropicFiltering: () => void;
+	}
+
 	const DEBUG: boolean;
 
 	let GL: typeof WebGLRenderingContext | typeof WebGL2RenderingContext;

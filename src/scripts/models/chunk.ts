@@ -39,8 +39,13 @@ export class Chunk {
 		Texture.terrain.bind();
 
 		// Rotate
+		const position = vec3.fromValues(
+			Math.ceil(this.position.x * CHUNK_SIZE),
+			0,
+			Math.ceil(this.position.y * CHUNK_SIZE)
+		);
 		const modelMatrix = mat4.create();
-		mat4.translate(modelMatrix, modelMatrix, this.globalPosition);
+		mat4.translate(modelMatrix, modelMatrix, position);
 
 		// Apply view to model
 		mat4.multiply(modelMatrix, view, modelMatrix);

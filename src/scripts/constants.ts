@@ -10,7 +10,7 @@ export const USE_ANIMATION_FRAME = true;
 
 // Chunk system
 export const CHUNK_SIZE = 16;
-export const CHUNK_HEIGHT = 32;
+export const CHUNK_HEIGHT = 128;
 
 // Gamepad
 export const GAMEPAD_DEADZONE = 0.1;

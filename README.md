@@ -87,6 +87,29 @@ Just so I can say I did something on the renderer, I created a `MeshBuilder`, th
 
 <p align="center"><small>Note to self: I need to add a counter for triangles, vertices and draw calls<br>That would be a nice debugging info to have.</small></p>
 
+### Day 4
+
+A few things I added:
+- **Chunk system**: I'm now rendering only the chunks that are visible, this is a huge performance boost, since I'm not rendering the whole world, only the parts that are visible.
+- **Frustum culling**: I'm now only rendering the chunks that are inside the camera frustum, this was such a pain to implement, but it was worth it.
+- **Terrain generation**: Using `simplex-noise.js`, I'm generating biomes and terrain, yet to be refined, but it's a start.
+- **3D Gizmo system**: I'm now able to visualize objects when debugging, this is a huge help when working with `frustum culling`.
+- **Ansiotropic filtering**: I'm now using `ansio filtering` for the textures, this makes the textures look better when viewed from a distance.
+- **Multi camera support**: I'm now able to render to multiple cameras, I'm using this for debugging, I call it `the debug camera`.
+- **Triangle, active chunks and vertices counter**: I was right, looks nice.
+- **Rendering pipeline**: Automatically handling all my post-processing filters with double buffering, this is a huge help when adding new filters.
+
+With all that, I can get a scene with 1024 chunks active (200~ rendered) at 100+fps on my M1 Macbook, which is pretty good. To show case all these features, instead of a thousand GIFs, I made a video:
+
+<br>
+<p align="center">
+	<a href="https://www.youtube.com/watch?v=zAHxJf1l5uY" target="_blank">
+		<img loading="lazy" src=".github/screenshots/day4.png" style="height: 400px; border-radius: 10pt; box-shadow: 0px 5pt 15pt rgba(0, 0, 0, 0.25)"/>
+	</a>
+</p>
+
+<p align="center"><small>Click on the image to see the video.</small></p>
+
 ## Used in this project
 
 | Name | Description |
@@ -105,3 +128,5 @@ Just so I can say I did something on the renderer, I created a `MeshBuilder`, th
 | [filesaver.js](https://github.com/eligrey/FileSaver.js) | For saving files ~duh~ |
 | [thebennybox](https://www.youtube.com/watch?v=Z9bYzpwVINA) | On the bright explanation of FXAA |
 | [gifski](https://github.com/ImageOptim/gifski) | For converting frames to gif like a champ |
+| [ffmpeg](https://ffmpeg.org/) | For converting video to gif like a champ |
+| [simplex-noise.js](https://github.com/jwagner/simplex-noise.js) | For generating noise |
