@@ -64,20 +64,17 @@ export class DensityCanvas {
 			// Set the virtual canvas size to the real resolution
 			this.element.width = width * this.drawRatio;
 			this.element.height = height * this.drawRatio;
-
-			// Set the presented canvas size to the visible resolution
-			this.element.style.width = `${width}px`;
-			this.element.style.minWidth = `${width}px`;
-			this.element.style.height = `${height}px`;
-			this.element.style.minHeight = `${height}px`;
 		} else {
 			// 1:1 ratio, just scale it
 			this.element.width = width;
 			this.element.height = height;
-
-			this.element.style.width = "";
-			this.element.style.height = "";
 		}
+		
+		// Set the presented canvas size to the visible resolution
+		this.element.style.width = `${width}px`;
+		this.element.style.minWidth = `${width}px`;
+		this.element.style.height = `${height}px`;
+		this.element.style.minHeight = `${height}px`;
 
 		// Scale the canvas according to the ratio
 		this.context.scale(this.drawRatio, this.drawRatio);
@@ -99,7 +96,7 @@ export class DensityCanvas {
 	 * @param {number} y The y position to draw the canvas
 	 * @param {CanvasRenderingContext2D} foreignContext The context to draw to
 	 */
-	drawTo(x: number, y: number, foreignContext: CanvasRenderingContext2D) {
+	drawTo(x: number, y: number, foreignContext: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D) {
 		foreignContext.save();
 		foreignContext.scale(1 / this.drawRatio, 1 / this.drawRatio);
 		foreignContext.drawImage(this.element, x, y);

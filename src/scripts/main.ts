@@ -16,7 +16,7 @@ import { Camera } from "./models/camera";
 import { GIFUtils } from "./utils/gif";
 import { Vector2 } from "./models/math/vector2";
 import { vec3 } from "gl-matrix";
-import { Terminal } from "./utils/terminal";
+import { Terminal } from "./debug/terminal";
 import { InputHandler } from "./input/input-handler";
 
 
@@ -53,8 +53,6 @@ export class Main {
 	constructor() {
 		Log.info("Main", "Starting up...");
 		this.state = new StatePlay(this);
-
-		this.debugCamera.position = vec3.fromValues(0, 0, -10);
 
 		this.attachHooks();
 	}
@@ -166,7 +164,10 @@ export class Main {
 	}
 
 	private requestNextFrame() {
-		if (USE_ANIMATION_FRAME) {
+		if (this.isRecording) {
+			if (this.handleAnimationFrameRequest !== -1) clearTimeout(this.handleAnimationFrameRequest);
+			this.handleAnimationFrameRequest = setTimeout(() => this.loop(performance.now()), 1000 / RECORDING_FRAME_RATE) as unknown as number;
+		} else if (USE_ANIMATION_FRAME) {
 			this.handleAnimationFrameRequest = requestAnimationFrame(this.loop.bind(this));
 		} else {
 			if (this.handleAnimationFrameRequest === -1) {
@@ -216,7 +217,7 @@ export class Main {
 		Terminal.update(deltaTime);
 
 		this.updateRecording(deltaTime);
-		if (this.isRecording) deltaTime = RECORDING_FRAME_RATE;
+		if (this.isRecording) deltaTime = 1.0 / RECORDING_FRAME_RATE;
 
 		let updatedInput = false;
 		const dt = deltaTime / SIMULATION_SUBSTEPS;
@@ -248,14 +249,15 @@ export class Main {
 		// WebGL
 		if (!SKIP_WEBGL) this.gl.render();
 
-		// GIF
-		if (this.isRecording) GIFUtils.addFrame(this.gl.canvas, this.gui.canvas.element);
-
 		Gizmo.render(this.gui.context);
 		Gizmo.clear();
 
-		if (DEBUG) this.analytics.render(this.gui.context);
+		if (DEBUG && !Terminal.isVisible()) this.analytics.render(this.gui.context);
 		Terminal.render(this.gui.context);
+
+		// GIF
+		if (this.isRecording) GIFUtils.addFrame(this.gl.canvas, this.gui.canvas);
+
 		if (DEBUG) this.analytics.endFrame();
 
 		this.requestNextFrame();

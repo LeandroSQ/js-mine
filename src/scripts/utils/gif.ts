@@ -1,5 +1,6 @@
 import FileSaver from 'file-saver';
 import { Log } from "./log";
+import { DensityCanvas } from '../core/components/density-canvas';
 
 // Not pretty to have code as this outside of a class,
 // But even uglier is to have a GIF logic that hangs the main thread everytime
@@ -17,12 +18,12 @@ if (!context) throw new Error("Could not get context of canvas");
 
 export abstract class GIFUtils {
 
-	public static addFrame(source: HTMLCanvasElement, overlay: HTMLCanvasElement) {
+	public static addFrame(source: HTMLCanvasElement, overlay: DensityCanvas) {
 		canvas.width = source.width;
 		canvas.height = source.height;
 
 		context.drawImage(source, 0, 0);
-		context.drawImage(overlay, 0, 0);
+		overlay.drawTo(0, 0, context);
 
 		const data = canvas.transferToImageBitmap();
 

@@ -20,7 +20,13 @@ export namespace Terminal {
 	function onKeyPress(event: KeyboardEvent) {
 		event.preventDefault();
 
+		console.log(event)
+
 		switch (event.code) {
+			case Key.Escape:
+				toggle(false);
+				break;
+
 			case Key.ArrowLeft:
 				cursor = Math.max(0, cursor - 1);
 				break;
@@ -37,7 +43,6 @@ export namespace Terminal {
 				}
 				break;
 			case Key.Backspace:
-				console.log(event);
 				if (cursor > 0) {
 					currentLine = currentLine.slice(0, cursor - 1) + currentLine.slice(cursor);
 					console.log(currentLine, cursor, currentLine[cursor - 1]);
@@ -70,22 +75,25 @@ export namespace Terminal {
 		}
 	}
 
+	function toggle(visible: boolean) {
+		if (visible) {
+			targetY = 0;
+			KeyboardInput.startCapture(onKeyPress);
+			visible = true;
+		} else {
+			targetY = -height;
+			KeyboardInput.releaseCapture();
+			visible = false;
+		}
+
+	}
+
 	export function isVisible() {
 		return visible;
 	}
 
 	export function update(deltaTime: number) {
-		if (InputHandler.isTogglingTerminal()) {
-			if (visible) {
-				targetY = -height;
-				KeyboardInput.releaseCapture();
-				visible = false;
-			} else {
-				targetY = 0;
-				KeyboardInput.startCapture(onKeyPress);
-				visible = true;
-			}
-		}
+		if (InputHandler.isTogglingTerminal() && !visible) toggle(true)
 
 		currentY = Math.lerp(currentY, targetY, 10 * deltaTime);
 	}

@@ -1,7 +1,7 @@
 import { Size } from "./types/size";
 
 // Mainly for debugging purposes
-export const RECORDING_FRAME_RATE = 1.0 / 24;
+export const RECORDING_FRAME_RATE = 24;
 export const RECORDING_VIEWPORT = { width: 808, height: 808 } as Size;
 export const SIMULATION_FREQUENCY = 60;
 export const SIMULATION_SUBSTEPS = 1;

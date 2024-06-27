@@ -56,8 +56,16 @@ export namespace KeyboardInput {
 	// #endregion
 
 	// #region Event handlers
+	function onKeyPress(event: KeyboardEvent) {
+		if (VERBOSE_KEYBOARD) Log.debug("Input", `Key press: ${event.key} (${event.code})`);
+		console.log(event);
+	}
+
 	function onKeyDown(event: KeyboardEvent) {
-		keyboardCaptureListener?.call(null, event);
+		if (event.key && event.key !== "Dead" && event.key !== "Unidentified") {
+			keyboardCaptureListener?.call(null, event);
+		}
+
 		if (event.repeat) return;
 
 		if (!Object.values(Key).includes(event.code as Key)) return;
@@ -101,6 +109,7 @@ export namespace KeyboardInput {
 	export function setup() {
 		window.addEventListener("keydown", onKeyDown.bind(this));
 		window.addEventListener("keyup", onKeyUp.bind(this));
+		window.addEventListener("keypress", onKeyPress.bind(this));
 	}
 
 	export function update() {
