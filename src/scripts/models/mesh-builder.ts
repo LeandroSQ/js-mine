@@ -1,5 +1,5 @@
-import { Chunk } from "./chunk";
-import { Vector2 } from "./vector2";
+import { Vector2 } from "./math/vector2";
+import { ChunkMesh } from "./terrain/chunk-mesh";
 
 const indices = [
 	0, 1, 2,
@@ -23,9 +23,8 @@ export class MeshBuilder {
 		this.vertices.push(...vertices.map((v, i) => v + offset[i % 3]));
 	}
 
-	public build(position: Vector2): Chunk {
-		return new Chunk(
-			position,
+	public build(position: Vector2): ChunkMesh {
+		return new ChunkMesh(
 			new Float32Array(this.vertices),
 			new Float32Array(this.uvs),
 			new Float32Array(this.normals),

@@ -67,7 +67,7 @@ function watchHtml() {
 }
 
 function handleTs() {
-	return src(["./src/scripts/main.ts", "./src/scripts/jobs/gif.worker.ts"])
+	return src(["./src/scripts/main.ts", "./src/scripts/jobs/*.worker.ts"])
 		.pipe(gulpEsbuild())
 		.pipe(dest("./dist/scripts"))
 		.pipe(reloadBrowsers());

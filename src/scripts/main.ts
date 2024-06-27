@@ -15,7 +15,7 @@ import { Size } from "./types/size";
 import { WebGLRenderer } from "./renderer/webgl-renderer";
 import { Camera } from "./models/camera";
 import { GIFUtils } from "./utils/gif";
-import { Vector2 } from "./models/vector2";
+import { Vector2 } from "./models/math/vector2";
 import { vec3 } from "gl-matrix";
 
 const SKIP_WEBGL = false;

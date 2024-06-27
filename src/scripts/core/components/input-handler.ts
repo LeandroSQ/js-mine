@@ -1,5 +1,5 @@
 import { GAMEPAD_LINEARITY, GAMEPAD_DEADZONE, GAMEPAD_LOOK_SENSITIVITY, LONG_PRESS } from "../../constants";
-import { Vector2 } from "../../models/vector2";
+import { Vector2 } from "../../models/math/vector2";
 import { Log } from "../../utils/log";
 import { Dictionary } from "../../types/dictionary";
 import { GamepadInputState, InputState } from "../../types/input-state";

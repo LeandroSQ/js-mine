@@ -6,10 +6,10 @@ import { Log } from "../utils/log";
 import { Theme } from "../utils/theme";
 import { Color } from "../utils/color";
 import { RenderingPipelineBuffer } from "../models/rendering-pipeline-buffer";
-import { ChunkManager } from "../models/chunk-manager";
-import { Chunk } from "../models/chunk";
-import { Gizmo3D } from "../utils/gizmo3d";
+import { Gizmo3D } from "../debug/gizmo3d";
 import { SETTINGS } from "../settings";
+import { ChunkManager } from "../models/terrain/chunk-manager";
+import { ChunkMesh } from "../models/terrain/chunk-mesh";
 
 export class WebGLRenderer {
 
@@ -71,7 +71,7 @@ export class WebGLRenderer {
 	}
 
 	private async setupMesh() {
-		await Chunk.setup(this.gl);
+		await ChunkMesh.setup(this.gl);
 	}
 
 	async setup() {
@@ -104,7 +104,7 @@ export class WebGLRenderer {
 		const view = this.main.camera.getViewMatrix();
 
 		// Draw chunks
-		let visibleChunks = ChunkManager.activeChunks.filter(chunk => this.main.playerCamera.isChunkInsideFrustum(chunk));
+		let visibleChunks = ChunkManager.activeChunks.filter(chunk => chunk && chunk.mesh && this.main.playerCamera.isChunkInsideFrustum(chunk));
 		if (SETTINGS.SORT_CHUNKS_BY_DISTANCE) {
 			const distances = visibleChunks.map(chunk => vec3.distance(chunk.globalCenterPosition, this.main.playerCamera.position));
 			visibleChunks = visibleChunks.sort((a, b) => {

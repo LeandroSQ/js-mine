@@ -1,12 +1,12 @@
 /* eslint-disable max-statements */
 import { Optional } from "./../types/optional";
 import { Main } from "../main";
-import { Rectangle } from "./rectangle";
 import { Log } from "../utils/log";
 import { Theme } from "../utils/theme";
 import { FONT_FAMILY, FONT_SIZE } from "../constants";
-import { Chunk } from "./chunk";
-import { ChunkManager } from "./chunk-manager";
+import { Rectangle } from "./math/rectangle";
+import { Chunk } from "./terrain/chunk";
+import { ChunkManager } from "./terrain/chunk-manager";
 
 
 export class Analytics {
@@ -46,8 +46,8 @@ export class Analytics {
 
 	public notifyChunkVisible(chunk: Chunk) {
 		this.activeChunkCount++;
-		this.vertexCount += chunk.vertexCount;
-		this.triangleCount += chunk.triangleCount;
+		this.vertexCount += chunk.mesh?.vertexCount ?? 0;
+		this.triangleCount += chunk.mesh?.triangleCount ?? 0;
 	}
 
 	public clear() {

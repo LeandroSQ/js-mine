@@ -1,7 +1,7 @@
 import { mat4 } from 'gl-matrix';
 import { Shader } from "./shader";
 import { Texture } from './texture';
-import { Vector3 } from './vector3';
+import { Vector3 } from './math/vector3';
 
 export class Mesh {
 

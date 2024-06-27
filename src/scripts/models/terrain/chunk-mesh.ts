@@ -1,17 +1,14 @@
 import { mat4, vec3 } from "gl-matrix";
-import { Shader } from "./shader";
-import { Texture } from "./texture";
-import { Vector2 } from "./vector2";
-import { CHUNK_SIZE } from "../constants";
-import { Vector3 } from "./vector3";
-import { Gizmo3D } from "../utils/gizmo3d";
+import { CHUNK_SIZE } from "../../constants";
+import { Vector2 } from "../math/vector2";
+import { Shader } from "../shader";
+import { Texture } from "../texture";
 
-export class Chunk {
+export class ChunkMesh {
 
 	private static shader: Shader;
 
 	constructor(
-		public position: Vector2,
 		private vertices: Float32Array,
 		private uvs: Float32Array,
 		private normals: Float32Array,
@@ -26,40 +23,29 @@ export class Chunk {
 		return this.indices.length / 3;
 	}
 
-	public get globalPosition() {
-		return vec3.fromValues(this.position.x * CHUNK_SIZE, 0, this.position.y * CHUNK_SIZE);
+	private get shader() {
+		return ChunkMesh.shader;
 	}
 
-	public get globalCenterPosition() {
-		return vec3.fromValues(this.position.x * CHUNK_SIZE + CHUNK_SIZE / 2, 0, this.position.y * CHUNK_SIZE + CHUNK_SIZE / 2);
-	}
-
-	public render(gl: WebGLContext, projection: mat4, view: mat4) {
-		Chunk.shader.bind();
+	public render(gl: WebGLContext, globalPosition: vec3, projection: mat4, view: mat4) {
+		this.shader.bind();
 		Texture.terrain.bind();
 
-		// Rotate
-		const position = vec3.fromValues(
-			Math.ceil(this.position.x * CHUNK_SIZE),
-			0,
-			Math.ceil(this.position.y * CHUNK_SIZE)
-		);
+		// Model matrix
 		const modelMatrix = mat4.create();
-		mat4.translate(modelMatrix, modelMatrix, position);
-
-		// Apply view to model
+		mat4.translate(modelMatrix, modelMatrix, globalPosition);
 		mat4.multiply(modelMatrix, view, modelMatrix);
 
 		// Set the matrix
-		Chunk.shader.setUniform("u_modelView", modelMatrix);
-		Chunk.shader.setUniform("u_projection", projection);
-		Chunk.shader.setUniform("u_texture", 0);
+		this.shader.setUniform("u_modelView", modelMatrix);
+		this.shader.setUniform("u_projection", projection);
+		this.shader.setUniform("u_texture", 0);
 
 		// Set the buffers
-		Chunk.shader.bindBuffer("vertex", this.vertices);
-		Chunk.shader.bindBuffer("uv", this.uvs);
-		Chunk.shader.bindBuffer("index", this.indices);
-		Chunk.shader.bindBuffer("normal", this.normals);
+		this.shader.bindBuffer("vertex", this.vertices);
+		this.shader.bindBuffer("uv", this.uvs);
+		this.shader.bindBuffer("index", this.indices);
+		this.shader.bindBuffer("normal", this.normals);
 
 		// Draw the mesh
 		gl.drawElements(GL.TRIANGLES, this.indices.length, GL.UNSIGNED_SHORT, 0);
