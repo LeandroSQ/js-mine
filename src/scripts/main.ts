@@ -1,10 +1,9 @@
 /* eslint-disable max-statements */
 import "./core/extensions";
-import { Analytics } from "./models/analytics";
+import { Analytics } from "./debug/analytics";
 import { Log } from "./utils/log";
-import { InputHandler } from "./core/components/input-handler";
 import { AState } from "./types/state";
-import { Gizmo } from "./utils/gizmo";
+import { Gizmo } from "./debug/gizmo";
 import { Cursor } from "./utils/cursor";
 import { Theme } from "./utils/theme";
 import { RECORDING_FRAME_RATE, RECORDING_VIEWPORT, SIMULATION_FREQUENCY, SIMULATION_SUBSTEPS, USE_ANIMATION_FRAME } from "./constants";
@@ -17,6 +16,9 @@ import { Camera } from "./models/camera";
 import { GIFUtils } from "./utils/gif";
 import { Vector2 } from "./models/math/vector2";
 import { vec3 } from "gl-matrix";
+import { Terminal } from "./utils/terminal";
+import { InputHandler } from "./input/input-handler";
+
 
 const SKIP_WEBGL = false;
 
@@ -211,13 +213,22 @@ export class Main {
 		let deltaTime = (newTime - this.lastFrameTime) / 1000.0;
 		this.lastFrameTime = newTime;
 
+		Terminal.update(deltaTime);
+
 		this.updateRecording(deltaTime);
 		if (this.isRecording) deltaTime = RECORDING_FRAME_RATE;
 
+		let updatedInput = false;
 		const dt = deltaTime / SIMULATION_SUBSTEPS;
 		for (let i = 0; i < SIMULATION_SUBSTEPS; i++) {
 			this.state.update(dt);
-			InputHandler.update();
+
+			if (!updatedInput) {// Update it only once, since it's the same for all substeps
+				// TODO: Move input handling out of update loop
+				updatedInput = true;
+				InputHandler.update();
+			}
+
 			if (DEBUG) this.analytics.endUpdate();
 		}
 
@@ -244,6 +255,7 @@ export class Main {
 		Gizmo.clear();
 
 		if (DEBUG) this.analytics.render(this.gui.context);
+		Terminal.render(this.gui.context);
 		if (DEBUG) this.analytics.endFrame();
 
 		this.requestNextFrame();

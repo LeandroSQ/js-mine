@@ -3,13 +3,14 @@ import { AState } from "../types/state";
 import { Log } from "../utils/log";
 import { Cursor } from "../utils/cursor";
 import { CursorType } from "../enums/cursor-type";
-import { InputHandler } from "../core/components/input-handler";
-import { Gizmo } from "../utils/gizmo";
-import { Vector2 } from "../models/vector2";
+import { Gizmo } from "../debug/gizmo";
+import { Vector2 } from "../models/math/vector2";
 import { TextAlign } from "../enums/text-align";
-import { ChunkManager } from "../models/chunk-manager";
-import { Rectangle } from "../models/rectangle";
 import { vec3 } from "gl-matrix";
+import { Rectangle } from "../models/math/rectangle";
+import { ChunkManager } from "../models/terrain/chunk-manager";
+import { Terminal } from "../utils/terminal";
+import { InputHandler } from "../input/input-handler";
 
 export class StatePlay extends AState {
 
@@ -48,31 +49,15 @@ export class StatePlay extends AState {
 		ChunkManager.updateActiveChunks(this.main.playerCamera.tiledPosition);
 	}
 
-	async update(deltaTime: number) {
-		this.invalidate();
-		const movementSpeed = 5 * (InputHandler.isRunning() ? 10 : 1);
+	private updateCameraRotation(deltaTime: number) {
 		const rotationSpeed = 20;
-
-		if (DEBUG && InputHandler.isSwitchingCameras()) {
-			Log.debug("StatePlay", `Switching cameras... to ${this.main.useDebugCamera ? "player" : "debug"}`);
-			this.main.useDebugCamera = !this.main.useDebugCamera;
-			if (this.main.useDebugCamera) {
-				// this.main.debugCamera.lookAt(this.main.playerCamera.position);
-				vec3.copy(this.main.debugCamera.position, this.main.playerCamera.position);
-				this.main.debugCamera.pitch = this.main.playerCamera.pitch;
-				this.main.debugCamera.yaw = this.main.playerCamera.yaw;
-				this.main.debugCamera.roll = this.main.playerCamera.roll;
-			}
-		}
-
-		this.camera.update(deltaTime);
-
-		// Look
 		this.camera.pitch -= InputHandler.getLookVertical() * deltaTime * rotationSpeed;
 		this.camera.pitch = Math.clamp(this.camera.pitch, -89, 89);
 		this.camera.yaw += InputHandler.getLookHorizontal() * deltaTime * rotationSpeed;
+	}
 
-		// Move
+	private updateCameraMovement(deltaTime: number) {
+		const movementSpeed = 5 * (InputHandler.isRunning() ? 20 : 1);
 		const movementY = InputHandler.getMovementVertical();
 		const movementX = InputHandler.getMovementHorizontal();
 		/* if (movementX !== 0 || movementY !== 0) */ this.updateActiveChunks();
@@ -95,6 +80,31 @@ export class StatePlay extends AState {
 		if (InputHandler.isJumping()) {
 			this.camera.position[1] += deltaTime * movementSpeed;
 		}
+	}
+
+	private updateControls(deltaTime: number) {
+		if (DEBUG && InputHandler.isSwitchingCameras()) {
+			Log.debug("StatePlay", `Switching cameras... to ${this.main.useDebugCamera ? "player" : "debug"}`);
+			this.main.useDebugCamera = !this.main.useDebugCamera;
+			if (this.main.useDebugCamera) {
+				// this.main.debugCamera.lookAt(this.main.playerCamera.position);
+				vec3.copy(this.main.debugCamera.position, this.main.playerCamera.position);
+				this.main.debugCamera.pitch = this.main.playerCamera.pitch;
+				this.main.debugCamera.yaw = this.main.playerCamera.yaw;
+				this.main.debugCamera.roll = this.main.playerCamera.roll;
+			}
+		}
+
+		this.camera.update(deltaTime);
+
+		this.updateCameraRotation(deltaTime);
+		this.updateCameraMovement(deltaTime);
+	}
+
+	async update(deltaTime: number) {
+		this.invalidate();
+
+		this.updateControls(deltaTime);
 
 		if (this.main.useDebugCamera) {
 			const thickness = 10;
@@ -122,7 +132,6 @@ export class StatePlay extends AState {
 	}
 
 	render(ctx: CanvasRenderingContext2D): void {
-		// Ignore
 	}
 
 }
