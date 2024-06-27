@@ -1,8 +1,8 @@
 import { mat4, vec3, vec4 } from "gl-matrix";
 import { Shader } from "../models/shader";
-import { Quad } from "../models/shapes/quad";
+import { Quad } from "../models/geometry/quad";
 import { Camera } from "../models/camera";
-import { Cube } from "../models/shapes/cube";
+import { Cube } from "../models/geometry/cube";
 
 interface IGizmo3D {
 

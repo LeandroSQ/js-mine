@@ -1,6 +1,6 @@
-import { Vector2 } from "../models/vector2";
+import { Vector2 } from "../models/math/vector2";
 import { Rectangle } from "../models/rectangle";
-import { Color } from "./color";
+import { Color } from "../utils/color";
 import { GamepadInputState } from "../types/input-state";
 import { Dictionary } from "../types/dictionary";
 import { GamepadAxis } from "../enums/gamepad-axis";
