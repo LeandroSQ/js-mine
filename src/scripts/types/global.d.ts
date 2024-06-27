@@ -33,6 +33,7 @@ declare global {
 		prettifyElapsedTime: (millis: number) => string;
 		toDegrees: (radians: number) => number;
 		toRadians: (degrees: number) => number;
+		prettifyUnit: (value: number, unit?: string) => string;
 	}
 
 	interface CanvasRenderingContext2D {

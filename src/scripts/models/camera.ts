@@ -1,10 +1,9 @@
 import { mat4, vec4, vec3 } from "gl-matrix";
-import { Size } from "../types/size";
-import { Vector2 } from "./vector2";
+import { Vector2 } from "./math/vector2";
 import { CHUNK_HEIGHT, CHUNK_SIZE } from "../constants";
-import { Chunk } from "./chunk";
-import { Gizmo3D } from "../utils/gizmo3d";
+import { Gizmo3D } from "../debug/gizmo3d";
 import { SETTINGS } from "../settings";
+import { Chunk } from "./terrain/chunk";
 
 export class Camera {
 

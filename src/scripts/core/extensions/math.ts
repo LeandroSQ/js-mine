@@ -65,6 +65,15 @@ Math.prettifyElapsedTime = function (ms) {
 	else return `${toFixed((ms / 3600000), 2)}h`;
 };
 
+Math.prettifyUnit = function (value, unit = "") {
+	if (value < 1000) return `${value}${unit}`;
+	if (value < 1000000) return `${(value / 1000).toFixed(2)}k${unit}`;
+	if (value < 1000000000) return `${(value / 1000000).toFixed(2)}M${unit}`;
+	else return `${(value / 1000000000).toFixed(2)}G${unit}`;
+
+	return value.toString();
+}
+
 Math.toDegrees = function (radians) {
 	return radians * (180 / Math.PI);
 };

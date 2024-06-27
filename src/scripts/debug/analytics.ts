@@ -1,12 +1,12 @@
 /* eslint-disable max-statements */
-import { Optional } from "./../types/optional";
+import { Optional } from "../types/optional";
 import { Main } from "../main";
 import { Log } from "../utils/log";
 import { Theme } from "../utils/theme";
 import { FONT_FAMILY, FONT_SIZE } from "../constants";
-import { Rectangle } from "./math/rectangle";
-import { Chunk } from "./terrain/chunk";
-import { ChunkManager } from "./terrain/chunk-manager";
+import { Rectangle } from "../models/math/rectangle";
+import { Chunk } from "../models/terrain/chunk";
+import { ChunkManager } from "../models/terrain/chunk-manager";
 
 
 export class Analytics {
@@ -107,7 +107,7 @@ export class Analytics {
 		let y = bounds.y + this.padding;
 
 		ctx.fillStyle = Theme.foreground;
-		ctx.font = `${FONT_SIZE * 0.25}px ${FONT_FAMILY}`;
+		ctx.font = `${FONT_SIZE}px ${FONT_FAMILY}`;
 		ctx.textBaseline = "top";
 
 		// Render the title
@@ -127,11 +127,11 @@ export class Analytics {
 		y += this.lineHeight;
 		ctx.fillText(`Last: ${Math.prettifyElapsedTime(last)}`, x, y);
 		y += this.lineHeight;
-		ctx.fillText(`Chunks: ${this.activeChunkCount} of ${ChunkManager.activeChunks.length}`, x, y);
+		ctx.fillText(`Chunks: ${this.activeChunkCount}/${Math.prettifyUnit(ChunkManager.activeChunks.length)} | ${Math.prettifyUnit(ChunkManager.loadedChunkCount)} loaded`, x, y);
 		y += this.lineHeight;
-		ctx.fillText(`Vertices: ${this.vertexCount}`, x, y);
+		ctx.fillText(`Vertices: ${Math.prettifyUnit(this.vertexCount)}`, x, y);
 		y += this.lineHeight;
-		ctx.fillText(`Triangles: ${this.triangleCount}`, x, y);
+		ctx.fillText(`Triangles: ${Math.prettifyUnit(this.triangleCount)}`, x, y);
 		y += this.lineHeight;
 	}
 

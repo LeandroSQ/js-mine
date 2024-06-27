@@ -1,5 +1,5 @@
 import { FrameBuffer } from "./frame-buffer";
-import { Quad } from "./shapes/quad";
+import { Quad } from "./geometry/quad";
 import { Shader } from "./shader";
 
 export class RenderingPipelineBuffer {

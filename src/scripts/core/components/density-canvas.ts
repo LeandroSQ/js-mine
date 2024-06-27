@@ -1,4 +1,4 @@
-import { Rectangle } from "../../models/rectangle";
+import { Rectangle } from "../../models/math/rectangle";
 import { Size } from "../../types/size";
 
 export class DensityCanvas {
