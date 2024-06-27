@@ -10,7 +10,7 @@ export namespace KeyboardInput {
 
 	const VERBOSE_KEYBOARD = DEBUG && true;
 
-	const keys: Dictionary<InputState> = {};
+	const keyState: Dictionary<InputState> = {};
 	let keyboardCaptureListener: Optional<KeyboardCaptureListener> = null;
 
 	// #region API
@@ -31,27 +31,27 @@ export namespace KeyboardInput {
 	}
 
 	export function isKeyDown(...keys: Key[]): boolean {
-		return keys.some(key => keys[key]?.active);
+		return keys.some(key => keyState[key]?.active);
 	}
 
 	export function isKeyUp(...keys: Key[]): boolean {
-		return keys.some(key => !keys[key]?.active);
+		return keys.some(key => !keyState[key]?.active);
 	}
 
 	export function isKeyJustPressed(...keys: Key[]): boolean {
-		return keys.some(key => keys[key]?.justPressed);
+		return keys.some(key => keyState[key]?.justPressed);
 	}
 
 	export function isKeyJustReleased(...keys: Key[]): boolean {
-		return keys.some(key => keys[key]?.justReleased);
+		return keys.some(key => keyState[key]?.justReleased);
 	}
 
 	export function isKeyLongPressed(...keys: Key[]): boolean {
-		return keys.some(key => keys[key]?.longPress);
+		return keys.some(key => keyState[key]?.longPress);
 	}
 
 	export function isKeyShortPressed(...keys: Key[]): boolean {
-		return keys.some(key => keys[key]?.shortPress);
+		return keys.some(key => keyState[key]?.shortPress);
 	}
 	// #endregion
 
@@ -64,7 +64,7 @@ export namespace KeyboardInput {
 
 		if (VERBOSE_KEYBOARD) Log.debug("Input", `Key down: ${event.key} (${event.code})`);
 
-		keys[event.code] = {
+		keyState[event.code] = {
 			active: true,
 			lastChange: Date.now(),
 			lastTrigger: Date.now(),
@@ -84,7 +84,7 @@ export namespace KeyboardInput {
 		if (VERBOSE_KEYBOARD) Log.debug("Input", `Key up: ${event.key} (${event.code})`);
 		if (!Object.values(Key).includes(event.code as Key)) return;
 
-		const obj = keys[event.code];
+		const obj = keyState[event.code];
 		if (!obj) return;
 		obj.active = false;
 		obj.lastChange = Date.now();
@@ -104,10 +104,10 @@ export namespace KeyboardInput {
 	}
 
 	export function update() {
-		for (const key in keys) {
-			if (!keys.hasOwnProperty(key)) continue;
+		for (const key in keyState) {
+			if (!keyState.hasOwnProperty(key)) continue;
 
-			const obj = keys[key];
+			const obj = keyState[key];
 			obj.justReleased = false;
 			obj.justPressed = false;
 			obj.shortPress = false;
