@@ -5,10 +5,11 @@ import { Dictionary } from "../types/dictionary";
 import { InputState } from "../types/input-state";
 import { Log } from "../utils/log";
 import { InputHandler } from "./input-handler";
+import { KeyboardInput } from "./keyboard";
 
 export namespace MouseInput {
 
-	const VERBOSE_MOUSE = DEBUG && true;
+	const VERBOSE_MOUSE = DEBUG && false;
 
 	const REQUIRE_LOCK_TO_MOVE = true as const;
 	const POINTER_LOCK_REQUEST_INTERVAL = 1000 as const;
@@ -49,6 +50,7 @@ export namespace MouseInput {
 
 	// #region Event handlers
 	function onMouseMove(event: MouseEvent) {
+		KeyboardInput.focus();
 		if (REQUIRE_LOCK_TO_MOVE && !document.pointerLockElement) return;
 
 		if (VERBOSE_MOUSE) Log.debug("Input", `Mouse move: ${event.clientX}, ${event.clientY}`);
@@ -61,6 +63,7 @@ export namespace MouseInput {
 	}
 
 	function onMouseDown(event: MouseEvent) {
+		KeyboardInput.focus();
 		if (!Object.values(MouseButton).includes(event.button as MouseButton)) return;
 
 		if (VERBOSE_MOUSE) Log.debug("Input", `Mouse down: ${event.button}`);
@@ -82,6 +85,7 @@ export namespace MouseInput {
 	}
 
 	function onMouseUp(event: MouseEvent) {
+		KeyboardInput.focus();
 		if (!Object.values(MouseButton).includes(event.button as MouseButton)) return;
 
 		if (VERBOSE_MOUSE) Log.debug("Input", `Mouse up: ${event.button}`);
@@ -118,8 +122,9 @@ export namespace MouseInput {
 	}
 
 	function onMouseWheel(event: WheelEvent) {
+		KeyboardInput.focus();
 		if (VERBOSE_MOUSE) Log.debug("Input", `Mouse wheel: ${event.deltaY}`);
-		
+
 		mouseWheelDelta = event.deltaY;
 	}
 

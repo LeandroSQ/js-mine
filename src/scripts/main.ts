@@ -238,11 +238,12 @@ export class Main {
 	}
 
 	private loop(time: DOMHighResTimeStamp) {
+		if (DEBUG) this.analytics.startFrame(time);
+		
 		this.update(time);
 
 		// GUI
 		Cursor.apply(this.gui.element);
-		if (DEBUG) this.analytics.startFrame(time);
 		this.gui.render();
 		this.state.render(this.gui.context);
 

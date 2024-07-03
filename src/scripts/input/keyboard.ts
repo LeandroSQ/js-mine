@@ -1,3 +1,4 @@
+import debounce from "debounce";
 import { LONG_PRESS } from "../constants";
 import { Key } from "../enums/key";
 import { Dictionary } from "../types/dictionary";
@@ -8,26 +9,44 @@ import { InputHandler } from "./input-handler";
 
 export namespace KeyboardInput {
 
-	const VERBOSE_KEYBOARD = DEBUG && true;
+	const VERBOSE_KEYBOARD = DEBUG && false;
 
 	const keyState: Dictionary<InputState> = {};
+	let inputElement: HTMLInputElement;
 	let keyboardCaptureListener: Optional<KeyboardCaptureListener> = null;
 
 	// #region API
-	export type KeyboardCaptureListener = (e: KeyboardEvent) => void;
+	export type KeyboardCaptureListener = (text: string, selectionStart: number, selectionEnd: number) => void;
 
 	export function isCaptured() {
 		return keyboardCaptureListener !== null;
 	}
 
+	export function setInput(text: string, selectionStart: number, selectionEnd: number) {
+		inputElement.value = text;
+		inputElement.setSelectionRange(selectionStart, selectionEnd);
+	}
+
+	export function clearInput() {
+		inputElement.value = "";
+		inputElement.focus();
+	}
+
+	export function focus() {
+		if (isCaptured()) inputElement.focus();
+	}
+
 	export function startCapture(listener: KeyboardCaptureListener) {
 		if (VERBOSE_KEYBOARD) Log.debug("Input", "Keyboard capture started!");
 		keyboardCaptureListener = listener;
+		inputElement.focus();
 	}
 
 	export function releaseCapture() {
 		if (VERBOSE_KEYBOARD) Log.debug("Input", "Keyboard capture ended!");
 		keyboardCaptureListener = null;
+		inputElement.blur();
+		inputElement.value = "";
 	}
 
 	export function isKeyDown(...keys: Key[]): boolean {
@@ -56,15 +75,18 @@ export namespace KeyboardInput {
 	// #endregion
 
 	// #region Event handlers
-	function onKeyPress(event: KeyboardEvent) {
-		if (VERBOSE_KEYBOARD) Log.debug("Input", `Key press: ${event.key} (${event.code})`);
-		console.log(event);
+	function onInput(event?: InputEvent) {
+		const text = inputElement.value;
+		const selectionStart = inputElement.selectionStart;
+		const selectionEnd = inputElement.selectionEnd;
+
+		keyboardCaptureListener?.call(this, text, selectionStart, selectionEnd);
+
+		if (VERBOSE_KEYBOARD) Log.debug("Input", `Key press: ${text} (${selectionStart} - ${selectionEnd})`);
 	}
 
 	function onKeyDown(event: KeyboardEvent) {
-		if (event.key && event.key !== "Dead" && event.key !== "Unidentified") {
-			keyboardCaptureListener?.call(null, event);
-		}
+		if (isCaptured()) onInput();
 
 		if (event.repeat) return;
 
@@ -87,6 +109,8 @@ export namespace KeyboardInput {
 	}
 
 	function onKeyUp(event: KeyboardEvent) {
+		if (isCaptured()) onInput();
+
 		if (event.repeat) return;
 
 		if (VERBOSE_KEYBOARD) Log.debug("Input", `Key up: ${event.key} (${event.code})`);
@@ -107,9 +131,23 @@ export namespace KeyboardInput {
 	// #endregion
 
 	export function setup() {
+		// Wish there was a better way to do this, but IME is a pain
+		// And composition events only really work on `contenteditable` elements
+		// So there is no way to capture input events without an input element :/
+		inputElement = document.createElement("input");
+		inputElement.type = "text";
+		inputElement.style.position = "absolute";
+		inputElement.style.left = "0px";
+		inputElement.style.top = "300px";
+		inputElement.style.width = "200px";
+		inputElement.style.height = "20px";
+		inputElement.style.zIndex = "-1";
+		inputElement.style.pointerEvents = "none";
+		document.body.appendChild(inputElement);
+		inputElement.addEventListener("input", onInput.bind(this));
+
 		window.addEventListener("keydown", onKeyDown.bind(this));
 		window.addEventListener("keyup", onKeyUp.bind(this));
-		window.addEventListener("keypress", onKeyPress.bind(this));
 	}
 
 	export function update() {
