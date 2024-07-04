@@ -20,6 +20,7 @@ declare global {
 	interface Array<T> {
 		remove: (item: T) => boolean;
 		appendArray: (array: Array<T> | undefined) => void;
+		shuffle: () => void;
 	}
 
 	interface Math {
@@ -52,6 +53,10 @@ declare global {
 	interface PromiseConstructor {
 		delay: (ms: number) => Promise<void>;
 		sequential<T>(promises: Promise<T>[]): Promise<T[]>;
+	}
+
+	interface Performance {
+		getUsedMemory(): Promise<number>;
 	}
 
 	interface WebGLRenderingContext {
