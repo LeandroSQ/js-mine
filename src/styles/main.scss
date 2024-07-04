@@ -37,10 +37,20 @@ html {
 	background-blend-mode: soft-light;
 }
 
+body {
+	display: flex;
+	place-content: center;
+	place-items: center;
+}
+
+input {
+	opacity: 0;
+	border: none;
+	outline: none;
+}
+
 canvas {
-	position: absolute;
-	top: 0px;
-	left: 0px;
+	position: fixed;
 	width: 100%;
 	width: 100vw;
 	width: 100svw;
