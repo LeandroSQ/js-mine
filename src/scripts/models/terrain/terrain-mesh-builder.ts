@@ -15,10 +15,10 @@ export class TerrainMeshBuilder {
 	constructor(
 		private position: Vector2,
 		private chunk: Chunk,
-		private leftNeighbor: Optional<Chunk>,
-		private rightNeighbor: Optional<Chunk>,
-		private frontNeighbor: Optional<Chunk>,
-		private backNeighbor: Optional<Chunk>
+		private westNeighbor: Optional<Chunk>,
+		private eastNeighbor: Optional<Chunk>,
+		private northNeighbor: Optional<Chunk>,
+		private southNeighbor: Optional<Chunk>
 	) { }
 
 	/**
@@ -36,12 +36,12 @@ export class TerrainMeshBuilder {
 
 					const pos = new Vector3(x, y, z);
 
-					this.addFace(pos, Direction.Up, voxel);
+					if (y < CHUNK_HEIGHT) this.addFace(pos, Direction.Up, voxel);
 					if (y > 0) this.addFace(pos, Direction.Down, voxel);
-					this.addFace(pos, Direction.Left, voxel);
-					this.addFace(pos, Direction.Right, voxel);
-					this.addFace(pos, Direction.Forward, voxel);
-					this.addFace(pos, Direction.Back, voxel);
+					this.addFace(pos, Direction.West, voxel);
+					this.addFace(pos, Direction.East, voxel);
+					this.addFace(pos, Direction.North, voxel);
+					this.addFace(pos, Direction.South, voxel);
 				}
 			}
 		}
@@ -61,22 +61,22 @@ export class TerrainMeshBuilder {
 					vertices: Cube.bottomFaceVertices,
 					normals: Cube.bottomFaceNormals
 				};
-			case Direction.Left:
+			case Direction.West:
 				return {
 					vertices: Cube.leftFaceVertices,
 					normals: Cube.leftFaceNormals
 				};
-			case Direction.Right:
+			case Direction.East:
 				return {
 					vertices: Cube.rightFaceVertices,
 					normals: Cube.rightFaceNormals
 				};
-			case Direction.Forward:
+			case Direction.North:
 				return {
 					vertices: Cube.frontFaceVertices,
 					normals: Cube.frontFaceNormals
 				};
-			case Direction.Back:
+			case Direction.South:
 				return {
 					vertices: Cube.backFaceVertices,
 					normals: Cube.backFaceNormals
@@ -98,14 +98,14 @@ export class TerrainMeshBuilder {
 
 	private getNeighbor(side: Direction): Optional<Chunk> {
 		switch (side) {
-			case Direction.Right:
-				return this.rightNeighbor;
-			case Direction.Left:
-				return this.leftNeighbor;
-			case Direction.Forward:
-				return this.frontNeighbor;
-			case Direction.Back:
-				return this.backNeighbor;
+			case Direction.East:
+				return this.eastNeighbor;
+			case Direction.West:
+				return this.westNeighbor;
+			case Direction.North:
+				return this.northNeighbor;
+			case Direction.South:
+				return this.southNeighbor;
 			default:
 				return null;
 		}
@@ -121,8 +121,7 @@ export class TerrainMeshBuilder {
 		if (!neighbor) return false;
 
 		// Convert it into global position
-		const tmp = this.position.multiply(CHUNK_SIZE).add(adjacentVoxelPosition);
-		const worldPosition = new Vector3(tmp.x, pos.y, tmp.y);
+		const worldPosition = new Vector3(this.position.x * CHUNK_SIZE, 0, this.position.y * CHUNK_SIZE).add(adjacentVoxelPosition);
 		const neighborVoxel = neighbor.getVoxelAtGlobalPosition(worldPosition);
 		if (neighborVoxel) return true;
 

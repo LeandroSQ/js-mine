@@ -1,9 +1,8 @@
-import { CHUNK_HEIGHT, CHUNK_SIZE } from "../../constants";
+import { CHUNK_SIZE } from "../../constants";
 import { Biome } from "../../enums/biome";
 import { VoxelType } from "../../enums/voxel-type";
-import { SETTINGS } from "../../settings";
 import { Chunk } from "../terrain/chunk";
-import { Array3D } from "../math/array3d";
+import { VoxelGrid } from "../math/voxel-grid";
 import { NoiseGenerator } from "../math/noise-generator";
 import { Vector2 } from "../math/vector2";
 import { Optional } from "../../types/optional";
@@ -11,14 +10,14 @@ import { Optional } from "../../types/optional";
 export namespace TerrainGenerator {
 
 	const altitudeNoiseGenerators = {
-		[Biome.Plains]: new NoiseGenerator(`${SETTINGS.TERRAIN_GENERATION_SEED}-altitude-plains`, 4, 100, 0, 1),
-		[Biome.Desert]: new NoiseGenerator(`${SETTINGS.TERRAIN_GENERATION_SEED}-altitude-desert`, 4, 100, 0, 1),
-		[Biome.Mountains]: new NoiseGenerator(`${SETTINGS.TERRAIN_GENERATION_SEED}-altitude-mountains`, 4, 100, 0, 1),
-		[Biome.Snow]: new NoiseGenerator(`${SETTINGS.TERRAIN_GENERATION_SEED}-altitude-snow`, 4, 100, 0, 1),
+		[Biome.Plains]: new NoiseGenerator(`altitude-plains`, 4, 100, 0, 1),
+		[Biome.Desert]: new NoiseGenerator(`altitude-desert`, 4, 100, 0, 1),
+		[Biome.Mountains]: new NoiseGenerator(`altitude-mountains`, 4, 100, 0, 1),
+		[Biome.Snow]: new NoiseGenerator(`altitude-snow`, 4, 100, 0, 1),
 	};
 
-	const moistureNoiseGenerator = new NoiseGenerator(`${SETTINGS.TERRAIN_GENERATION_SEED}-moisture`, 1, 500, 0, 100);
-	const temperatureNoiseGenerator = new NoiseGenerator(`${SETTINGS.TERRAIN_GENERATION_SEED}-temperature`, 1, 1000, 20, 50);
+	const moistureNoiseGenerator = new NoiseGenerator(`moisture`, 1, 500, 0, 100);
+	const temperatureNoiseGenerator = new NoiseGenerator(`temperature`, 1, 1000, 20, 50);
 
 	function getBiomeAt(x: number, z: number): Biome {
 		const moisture = moistureNoiseGenerator.get(x, z);
@@ -63,6 +62,10 @@ export namespace TerrainGenerator {
 		const altitudeA = getAltitudeAt(x, z, biomeTarget);
 		const altitudeB = getAltitudeAt(x, z, biomeSource);
 
+		// Dither the mix value
+		mix = Math.max(0, Math.min(1, mix));
+		mix = Math.floor(mix * 10) / 10;
+
 		return altitudeA * mix + altitudeB * (1 - mix);
 	}
 
@@ -91,7 +94,7 @@ export namespace TerrainGenerator {
 	}
 
 	export function generateChunkVoxels(pos: Vector2): Chunk {
-		const voxels = new Array3D<VoxelType>(CHUNK_SIZE, CHUNK_HEIGHT, CHUNK_SIZE);
+		const voxels = new VoxelGrid();
 
 		for (let x = 0; x < CHUNK_SIZE; x++) {
 			for (let z = 0; z < CHUNK_SIZE; z++) {

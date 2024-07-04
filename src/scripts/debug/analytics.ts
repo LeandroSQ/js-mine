@@ -30,6 +30,11 @@ export class Analytics {
 	private activeChunkCount = 0;
 	private vertexCount = 0;
 	private triangleCount = 0;
+	private static chunkUpdateCount = 0;
+	private chunkUpdateCount = 0;
+
+	private memoryLastMeasurementTime = 0;
+	private memory = NaN;
 
 	private chart: number[] = [];
 
@@ -48,6 +53,10 @@ export class Analytics {
 		this.activeChunkCount++;
 		this.vertexCount += chunk.mesh?.vertexCount ?? 0;
 		this.triangleCount += chunk.mesh?.triangleCount ?? 0;
+	}
+
+	public static notifyChunkUpdate() {
+		this.chunkUpdateCount++;
 	}
 
 	public clear() {
@@ -79,7 +88,7 @@ export class Analytics {
 	private calculateBounds(): Rectangle {
 		const padding = 15;
 		const width = 200;
-		const height = 161;
+		const height = 201;
 
 		const x = padding;
 		const y = padding;
@@ -129,15 +138,21 @@ export class Analytics {
 		y += this.lineHeight;
 		ctx.fillText(`Chunks: ${this.activeChunkCount}/${Math.prettifyUnit(ChunkManager.activeChunks.length)} | ${Math.prettifyUnit(ChunkManager.loadedChunkCount)} loaded`, x, y);
 		y += this.lineHeight;
+		ctx.fillText(`Chunk updates: ${this.chunkUpdateCount}`, x, y);
+		y += this.lineHeight;
 		ctx.fillText(`Vertices: ${Math.prettifyUnit(this.vertexCount)}`, x, y);
 		y += this.lineHeight;
 		ctx.fillText(`Triangles: ${Math.prettifyUnit(this.triangleCount)}`, x, y);
 		y += this.lineHeight;
+		if (!isNaN(this.memory)) {
+			ctx.fillText(`Memory: ${Math.prettifyUnit(this.memory, "B")}`, x, y);
+			y += this.lineHeight;
+		}
 	}
 
 	private renderChart(ctx: CanvasRenderingContext2D, bounds: Rectangle, max: number, reference: number) {
 		const chartX = bounds.x;
-		const chartY = bounds.y + this.padding + this.lineHeight * 4.5;
+		const chartY = bounds.y + this.padding + this.lineHeight * 14.5;
 		const maxHeight = bounds.y + bounds.height - chartY - this.padding;
 		const width = bounds.width + 1;
 		const spacing = width / this.maxEntries;
@@ -179,7 +194,23 @@ export class Analytics {
 			this.frameCount = 0;
 			this.ups = this.updateCount;
 			this.updateCount = 0;
+
+			this.chunkUpdateCount = Analytics.chunkUpdateCount;
+			Analytics.chunkUpdateCount = 0;
+
+			if ("measureUserAgentSpecificMemory" in performance) {
+				performance.measureUserAgentSpecificMemory().then((memory) => {
+					console.log(memory);
+					this.memory = memory.bytes;
+				});
+			} else if ("memory" in performance) {
+				this.memory = performance.memory.usedJSHeapSize;
+			} else {
+				this.memory = NaN;
+			}
 		}
+
+
 
 		this.currentMaxHeight = Math.lerp(this.currentMaxHeight, this.targetMaxHeight, deltaTime);
 	}

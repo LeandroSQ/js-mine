@@ -104,11 +104,42 @@ With all that, I can get a scene with 1024 chunks active (200~ rendered) at 100+
 <br>
 <p align="center">
 	<a href="https://www.youtube.com/watch?v=zAHxJf1l5uY" target="_blank">
-		<img loading="lazy" src=".github/screenshots/day4.png" style="height: 400px; border-radius: 10pt; box-shadow: 0px 5pt 15pt rgba(0, 0, 0, 0.25)"/>
+		<img loading="lazy" src=".github/screenshots/day4.png" style="width: 400px; border-radius: 10pt; box-shadow: 0px 5pt 15pt rgba(0, 0, 0, 0.25)"/>
 	</a>
 </p>
 
 <p align="center"><small>Click on the image to see the video.</small></p>
+
+### Day 5
+
+
+You also won't believe this, but I have made the terrain generation to be `M-U-L-T-I-T-H-R-E-A-D-E-D`, yes, you heard it right, I'm generating the terrain in a `worker`, this is a huge performance boost, since I'm not blocking the main thread with the generation of the terrain. Such a pain to handle the communication back-and-forth between the `worker` and the main thread, but it was worth it.
+
+Another thing I implemented was a nice `debug console`, that just evaluates whatever JS code I input in it, this is a huge help when debugging, since I can test settings on the fly.
+
+<p align="center">
+	<img loading="lazy" src=".github/screenshots/day5-1.gif" style="height: 400px; border-radius: 10pt; box-shadow: 0px 5pt 15pt rgba(0, 0, 0, 0.25)"/>
+</p>
+
+<p align="center"><small>Pretty fancy, right?</small></p>
+
+
+### Day 6
+
+Since we now have terrain generation happening on the background I have split the process into two steps:
+- **Generate the terrain**: This is done in a worker, generating the terrain and sending it back to the main thread.
+- **Build the mesh**: This is done by the same worker, but using the main thread to orchestrate the process, since a chunk with updated meshing data will require its neighbors to be updated as well.
+
+<center>
+    <p float="left" align="center">
+		<img loading="lazy" src=".github/screenshots/day6-1.png" style="width: 48%; aspect-ratio: 1/1; max-width: 200px"/>
+        <img loading="lazy" src=".github/screenshots/day6-2.png" style="width: 48%; aspect-ratio: 1/1; max-width: 200px"/>
+    </p>
+</center>
+<p align="center"><small>On the left with occluding faces hidden / right showing all faces neighboring chunks</small></p>
+
+A 44% improvement on the amount of vertices/triangles being drawn! That's almost half of the mesh data that we don't have to send anymore to the GPU. A huge performance boost.
+
 
 ## Used in this project
 

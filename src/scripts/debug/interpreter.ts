@@ -1,3 +1,4 @@
+import { ChunkManager } from "../models/terrain/chunk-manager";
 import { SETTINGS } from "../settings";
 import { Log } from "../utils/log";
 
@@ -32,6 +33,7 @@ export namespace Interpreter {
 					throw new Error(`Invalid setting: ${key}.\nDid you mean: ${keys}?`);
 				}
 			},
+			reloadChunks: ChunkManager.reloadChunks.bind(this),
 			...extra
 		};
 	}

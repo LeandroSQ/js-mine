@@ -1,3 +1,4 @@
+import { SETTINGS } from './../../settings';
 import { createNoise2D, NoiseFunction2D } from 'simplex-noise';
 import Alea from 'alea';
 
@@ -8,7 +9,7 @@ export class NoiseGenerator {
 	constructor(seed: string, octaves: number, private scale: number, private min: number, private max: number) {
 		this.generators = [];
 		for (let i = 0; i < octaves; i++) {
-			this.generators.push(createNoise2D(Alea(seed + i)));
+			this.generators.push(createNoise2D(Alea(SETTINGS.TERRAIN_GENERATION_SEED + seed + i)));
 		}
 	}
 

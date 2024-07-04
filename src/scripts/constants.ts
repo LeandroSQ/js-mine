@@ -9,7 +9,7 @@ export const USE_ANIMATION_FRAME = true;
 
 // Chunk system
 export const CHUNK_SIZE = 16;
-export const CHUNK_HEIGHT = 128;
+export const CHUNK_HEIGHT = 64;
 
 // Gamepad
 export const GAMEPAD_DEADZONE = 0.1;
@@ -21,7 +21,7 @@ export const GUI_MARGIN = 15;
 
 // Font
 export const FONT_SIZE = 12;
-export const FONT_FAMILY = "'Pixelify Sans', sans-serif";
+export const FONT_FAMILY = "'Ubuntu Mono', sans-serif";
 
 // Input
 export const LONG_PRESS = 110;

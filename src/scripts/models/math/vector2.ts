@@ -40,8 +40,12 @@ export class Vector2 {
 		return new Vector2(this.x, this.y);
 	}
 
+	public static distanceSquared(a: Vector2, b: Vector2): number {
+		return (a.x - b.x) ** 2 + (a.y - b.y) ** 2;
+	}
+
 	public static distance(a: Vector2, b: Vector2): number {
-		return Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2);
+		return Math.sqrt(this.distanceSquared(a, b));
 	}
 
 	public static random(scalar: number): Vector2 {
