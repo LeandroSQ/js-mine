@@ -1,246 +1,292 @@
-/* eslint-disable max-statements */
-import { Optional } from "../types/optional";
-import { Main } from "../main";
-import { Log } from "../utils/log";
-import { Theme } from "../utils/theme";
 import { FONT_FAMILY, FONT_SIZE } from "../constants";
-import { Rectangle } from "../models/math/rectangle";
+import { Vector2 } from "../models/math/vector2";
 import { Chunk } from "../models/terrain/chunk";
 import { ChunkManager } from "../models/terrain/chunk-manager";
+import { Optional } from "../types/optional";
+import { Log } from "../utils/log";
+import { Theme } from "../utils/theme";
 
+type ChartInfo = {
+	average: number;
+	max: number;
+	last: number;
+	reference: number;
+	fps1Low: number;
+};
 
-export class Analytics {
+export namespace Analytics {
 
-	private readonly padding = 10;
-	private readonly lineHeight = 12;
-	private readonly maxEntries = 200;
+	const MARGIN = 10;
+	const PADDING = 15;
+	const WIDTH = 230;
+	const RADIUS = 10;
+	const LINE_HEIGHT = FONT_SIZE * 1.25;
 
-	private targetFPS = 60;
+	const FRAME_TIME_MAX_ENTRIES = 250;
 
-	private lastFrameTime = 0;
-	private frameTimer = 0;
-	private frameCount = 0;
-	private updateCount = 0;
-	private fps = 0;
-	private ups = 0;
+	// Timing
+	let targetFPS = 60;
+	let lastFrameTime = 0;
+	let frameTimer = 0;
+	let frameCount = 0;
+	let updateCount = 0;
+	let fps = 0;
+	let ups = 0;
+	let chart: Array<number> = [];
 
-	private currentMaxHeight = 1;
-	private targetMaxHeight = 1;
+	// For smooth transitioning on chart scaling
+	let currentMaxHeight = 1;
+	let targetMaxHeight = 1000 / targetFPS;
 
-	private activeChunkCount = 0;
-	private vertexCount = 0;
-	private triangleCount = 0;
-	private static chunkUpdateCount = 0;
-	private chunkUpdateCount = 0;
+	// Memory
+	let memory = 0;
 
-	private memoryLastMeasurementTime = 0;
-	private memory = NaN;
+	// Graphics
+	let activeChunkCount = 0;
+	let vertexCount = 0;
+	let triangleCount = 0;
 
-	private chart: number[] = [];
+	// Raycast
+	let raycastStepCount = 0;
+	let raycastSteps = 0;
 
-	constructor(private main: Main) { }
+	// Chunks
+	let chunkUpdateCount = 0;
+	let chunkUpdates = 0;
 
-	public async setup() {
+	export async function setup() {
 		try {
-			this.targetFPS = await window.getRefreshRate();
-			Log.info("Analytics", `Target FPS: ${this.targetFPS}`);
+			targetFPS = await window.getRefreshRate();
+			Log.info("Analytics", `Target FPS: ${targetFPS}`);
 		} catch (e) {
 			Log.warn("Analytics", "Failed to get refresh rate, defaulting to 60 FPS");
 		}
 	}
 
-	public notifyChunkVisible(chunk: Chunk) {
-		this.activeChunkCount++;
-		this.vertexCount += chunk.mesh?.vertexCount ?? 0;
-		this.triangleCount += chunk.mesh?.triangleCount ?? 0;
+	// #region Metrics tracking
+	export function notifyChunkVisible(chunk: Chunk) {
+		activeChunkCount++;
+		vertexCount += chunk.mesh?.vertexCount ?? 0;
+		triangleCount += chunk.mesh?.triangleCount ?? 0;
 	}
 
-	public static notifyChunkUpdate() {
-		this.chunkUpdateCount++;
+	export function notifyChunkUpdate() {
+		chunkUpdateCount++;
 	}
 
-	public clear() {
-		this.chart = [];
+	export function notifyRaycast() {
+		raycastStepCount++;
+	}
+	// #endregion
+
+	// #region Update
+	export function startFrame(time: DOMHighResTimeStamp = performance.now()) {
+		lastFrameTime = time;
+
+		activeChunkCount = 0;
+		vertexCount = 0;
+		triangleCount = 0;
+
+		raycastStepCount = 0;
 	}
 
-	public endUpdate() {
-		this.updateCount++;
+	export function update(deltaTime: number) {
+		frameTimer += deltaTime;
+		if (frameTimer >= 1.0) {
+			frameTimer -= 1.0;
+			fps = frameCount;
+			frameCount = 0;
+			ups = updateCount;
+			updateCount = 0;
+
+			chunkUpdates = chunkUpdateCount;
+			chunkUpdateCount = 0;
+
+			performance.getUsedMemory()
+				.then(memory => memory = memory);
+		}
+
+		currentMaxHeight = Math.lerp(currentMaxHeight, targetMaxHeight, deltaTime * 4);
 	}
 
-	public startFrame(time: Optional<DOMHighResTimeStamp> = null) {
-		this.lastFrameTime = time ?? performance.now();
-
-		this.activeChunkCount = 0;
-		this.vertexCount = 0;
-		this.triangleCount = 0;
+	export function endUpdate() {
+		updateCount++;
 	}
 
-	public endFrame() {
-		const elapsed = performance.now() - this.lastFrameTime;
-		this.frameCount++;
-		this.chart.push(elapsed);
+	export function endFrame() {
+		const elapsed = performance.now() - lastFrameTime;
+        frameCount++;
 
-		if (this.chart.length > this.maxEntries) {
-			this.chart.shift();
+        // Skip the first 1 second of data to allow the chart to stabilize
+        // if (chart.length === 0 && frameCount < targetFPS) return;
+
+		chart.push(elapsed);
+		if (chart.length > FRAME_TIME_MAX_ENTRIES) {
+			chart.shift();
+		}
+	}
+	// #endregion
+
+	// #region Rendering
+	/**
+	 * Calculates the average, max, and last frame time.
+	 */
+	function processChart(): ChartInfo {
+		const targetFrameTime = 1000 / targetFPS;
+		let maxFrameTime = 0;
+		let totalFrameTime = 0;
+		let last = 0;
+
+		for (const entry of chart) {
+			if (entry > maxFrameTime) maxFrameTime = entry;
+			totalFrameTime += entry;
+			last = entry;
+		}
+		const averageFrameTime = totalFrameTime / chart.length;
+		targetMaxHeight = maxFrameTime;
+
+		// 1% low
+		const sorted = chart.slice().sort((a, b) => a - b);
+		const targetIndex = Math.floor(sorted.length * 0.01);
+		let onePercentLow = (targetIndex >= 0 && targetIndex < sorted.length) ? Math.round(1000 / sorted[targetIndex]) : 0;
+
+		return {
+			average: averageFrameTime,
+			max: maxFrameTime,
+			last,
+			reference: targetFrameTime,
+			fps1Low: onePercentLow
 		}
 	}
 
-	private calculateBounds(): Rectangle {
-		const padding = 15;
-		const width = 200;
-		const height = 201;
+	function renderMetrics(ctx: CanvasRenderingContext2D, chart: ChartInfo, cursor: Vector2) {
+        function text(text: string) {
+            // Split the text into parts to allow for bolding
+            // Splitting at : but keeping the colon on the left side
+            const parts = text.split(/([a-zA-Z 0-9\%]+:)/g);
+            let offset = 0;
+            for (let i = 0; i < parts.length; i++) {
+                const part = parts[i];
+                if (part.length <= 0) continue;
 
-		const x = padding;
-		const y = padding;
+                const isBold = part.includes(":");
+                ctx.fillStyle = isBold ? Theme.secondary : Theme.foreground;
+                ctx.font = `${isBold ? "bold" : "normal"} ${FONT_SIZE}px ${FONT_FAMILY}`;
+                ctx.fillText(part, cursor.x + offset, cursor.y);
+                offset += ctx.measureText(part).width;
+            }
+            cursor.y += LINE_HEIGHT;
+		}
 
-		return new Rectangle(x, y, width, height);
+		// Initial cursor position
+		cursor.x = MARGIN + PADDING;
+		cursor.y = MARGIN + PADDING;
+
+		// Setup font
+		ctx.font = `bold ${FONT_SIZE}px ${FONT_FAMILY}`;
+        ctx.textBaseline = "top";
+		ctx.fillStyle = Theme.secondary;
+		ctx.textAlign = "center";
+		ctx.fillText("- Analytics -", cursor.x + WIDTH / 2, cursor.y);
+		cursor.y += LINE_HEIGHT + PADDING / 2;
+
+		// Render values
+		ctx.fillStyle = Theme.foreground;
+		ctx.textAlign = "left";
+		text(`FPS: ${fps} real / ${Math.floor(1000.0 / chart.max)} max est.`);
+		text(`Average: ${Math.prettifyElapsedTime(chart.average)} | Max: ${Math.prettifyElapsedTime(chart.max)}`);
+		text(`1% Low: ${chart.fps1Low} | Last: ${Math.prettifyElapsedTime(chart.last)}`);
+		text(`UPS: ${ups}`);
+		text(`Chunks: ${activeChunkCount}/${Math.prettifyUnit(ChunkManager.activeChunks.length)} | ${Math.prettifyUnit(ChunkManager.loadedChunkCount)} loaded`);
+		text(`Chunk updates: ${chunkUpdates}`);
+		text(`Vertices: ${Math.prettifyUnit(vertexCount)}`);
+		text(`Triangles: ${Math.prettifyUnit(triangleCount)}`);
+		text(`Ray casts: ${Math.prettifyUnit(raycastSteps)}`);
+        if (!isNaN(memory)) text(`Memory usage: ${Math.prettifyUnit(memory, "B")}`);
+
+        cursor.y += LINE_HEIGHT;
 	}
 
-	private renderBackground(ctx: CanvasRenderingContext2D, bounds: Rectangle) {
+	function renderChart(ctx: CanvasRenderingContext2D, info: ChartInfo, cursor: Vector2) {
+		if (chart.length < 2) return;
+
+		const chartHeight = 50;
+		const chartWidth = WIDTH + MARGIN + PADDING * 2;
+		const chartX = MARGIN;
+		const spacing = chartWidth / (FRAME_TIME_MAX_ENTRIES - 1);
+
+		// Create a round rect clipping mask
+		ctx.save();
+		ctx.beginPath();
+		ctx.roundRect(chartX, cursor.y, chartWidth, chartHeight, [0, 0, RADIUS, RADIUS]);
+		ctx.clip();
+
+		// Render the chart
+		const gradient = ctx.createLinearGradient(chartX, cursor.y, chartX, cursor.y + chartHeight);
+        gradient.addColorStop(0.25, "#ef5777");
+        gradient.addColorStop(1, "#f53b57");
+		ctx.fillStyle = gradient;
+		ctx.strokeStyle = Theme.containerBorder;
+		ctx.beginPath();
+		ctx.moveTo(chartX, cursor.y + chartHeight);
+		const logMax = Math.max(currentMaxHeight, 0);
+		for (let i = 0; i < chart.length; i++) {
+			const peak = (chart[i] / logMax) * chartHeight;
+			const x = chartX + i * spacing;
+			const y = cursor.y + chartHeight - peak;
+
+			ctx.lineTo(x, y);
+		}
+		ctx.lineTo(chartX + (chart.length - 1) * spacing, cursor.y + chartHeight);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		ctx.restore();
+
+		// Draw the reference line
+		if (currentMaxHeight > info.reference) {
+			const referenceHeight = info.reference / currentMaxHeight * chartHeight;
+            ctx.strokeStyle = "#05c46b";
+            ctx.lineWidth = 1.5;
+			ctx.beginPath();
+			ctx.moveTo(chartX, cursor.y + chartHeight - referenceHeight);
+			ctx.lineTo(chartX + chartWidth, cursor.y + chartHeight - referenceHeight);
+			ctx.stroke();
+		}
+
+		cursor.y += chartHeight;
+	}
+
+	function renderBackground(ctx: CanvasRenderingContext2D, cursor: Vector2) {
 		ctx.fillStyle = Theme.containerBackground;
 		ctx.strokeStyle = Theme.containerBorder;
-		ctx.lineWidth = 0.5;
+		ctx.lineWidth = 1;
 
 		ctx.save();
 		ctx.beginPath();
 		ctx.shadowColor = Theme.containerShadow;
 		ctx.shadowBlur = 25;
-		ctx.roundRect(bounds.x, bounds.y, bounds.width, bounds.height, 10);
+		ctx.roundRect(MARGIN, MARGIN, WIDTH + MARGIN + PADDING * 2, cursor.y - RADIUS, RADIUS);
 		ctx.fill();
 		ctx.stroke();
 		ctx.restore();
 	}
 
-	private renderDebugOverlay(ctx: CanvasRenderingContext2D, bounds: Rectangle, average: number, max: number, last: number) {
-		const x = bounds.x + this.padding;
-		let y = bounds.y + this.padding;
-
-		ctx.fillStyle = Theme.foreground;
-		ctx.font = `${FONT_SIZE}px ${FONT_FAMILY}`;
-		ctx.textBaseline = "top";
-
-		// Render the title
-		ctx.textAlign = "center";
-		ctx.fillText("Analytics", bounds.x + bounds.width / 2, y);
-		y += this.lineHeight + this.padding / 2;
-
-		// Render the values
-		ctx.textAlign = "left";
-		ctx.fillText(`FPS: ${this.fps} real / ${Math.floor(1000.0 / max)} max est.`, x, y);
-		y += this.lineHeight;
-		ctx.fillText(`UPS: ${this.ups}`, x, y);
-		y += this.lineHeight;
-		ctx.fillText(`Average: ${Math.prettifyElapsedTime(average)}`, x, y);
-		y += this.lineHeight;
-		ctx.fillText(`Max: ${Math.prettifyElapsedTime(max)}`, x, y);
-		y += this.lineHeight;
-		ctx.fillText(`Last: ${Math.prettifyElapsedTime(last)}`, x, y);
-		y += this.lineHeight;
-		ctx.fillText(`Chunks: ${this.activeChunkCount}/${Math.prettifyUnit(ChunkManager.activeChunks.length)} | ${Math.prettifyUnit(ChunkManager.loadedChunkCount)} loaded`, x, y);
-		y += this.lineHeight;
-		ctx.fillText(`Chunk updates: ${this.chunkUpdateCount}`, x, y);
-		y += this.lineHeight;
-		ctx.fillText(`Vertices: ${Math.prettifyUnit(this.vertexCount)}`, x, y);
-		y += this.lineHeight;
-		ctx.fillText(`Triangles: ${Math.prettifyUnit(this.triangleCount)}`, x, y);
-		y += this.lineHeight;
-		if (!isNaN(this.memory)) {
-			ctx.fillText(`Memory: ${Math.prettifyUnit(this.memory, "B")}`, x, y);
-			y += this.lineHeight;
-		}
-	}
-
-	private renderChart(ctx: CanvasRenderingContext2D, bounds: Rectangle, max: number, reference: number) {
-		const chartX = bounds.x;
-		const chartY = bounds.y + this.padding + this.lineHeight * 14.5;
-		const maxHeight = bounds.y + bounds.height - chartY - this.padding;
-		const width = bounds.width + 1;
-		const spacing = width / this.maxEntries;
-
-		// Render the chart
-		ctx.strokeStyle = Theme.secondary;
-		ctx.beginPath();
-		const logMax = Math.max(max, 0);
-		for (let i = 0; i < this.chart.length; i++) {
-			const value = Math.max(this.chart[i], 0);
-			const peak = value / logMax * maxHeight;
-			const x = chartX + i * spacing;
-			const y = chartY + maxHeight - peak;
-
-			if (i === 0) {
-				ctx.moveTo(x, y);
-			} else {
-				ctx.lineTo(x, y);
-			}
-		}
-		ctx.stroke();
-
-		// Draw the reference line
-		if (max <= reference) return;
-
-		const referenceHeight = reference / max * maxHeight;
-		ctx.strokeStyle = "#F00";
-		ctx.beginPath();
-		ctx.moveTo(chartX, chartY + maxHeight - referenceHeight);
-		ctx.lineTo(chartX + width, chartY + maxHeight - referenceHeight);
-		ctx.stroke();
-	}
-
-	public update(deltaTime: number) {
-		this.frameTimer += deltaTime;
-		if (this.frameTimer >= 1.0) {
-			this.frameTimer -= 1.0;
-			this.fps = this.frameCount;
-			this.frameCount = 0;
-			this.ups = this.updateCount;
-			this.updateCount = 0;
-
-			this.chunkUpdateCount = Analytics.chunkUpdateCount;
-			Analytics.chunkUpdateCount = 0;
-
-			if ("measureUserAgentSpecificMemory" in performance) {
-				performance.measureUserAgentSpecificMemory().then((memory) => {
-					console.log(memory);
-					this.memory = memory.bytes;
-				});
-			} else if ("memory" in performance) {
-				this.memory = performance.memory.usedJSHeapSize;
-			} else {
-				this.memory = NaN;
-			}
-		}
-
-
-
-		this.currentMaxHeight = Math.lerp(this.currentMaxHeight, this.targetMaxHeight, deltaTime);
-	}
-
-	public render(ctx: CanvasRenderingContext2D) {
+	export function render(ctx: CanvasRenderingContext2D) {
 		ctx.save();
 
-		const bounds = this.calculateBounds();
+		const chart = processChart();
+		const cursor = Vector2.zero;
 
-		this.renderBackground(ctx, bounds);
+		renderMetrics(ctx, chart, cursor);
+		renderChart(ctx, chart, cursor);
 
-		// Calculate the max and average frame time
-		const targetFrameTime = 1000 / this.targetFPS;
-		let maxFrameTime = 0;
-		let totalFrameTime = 0;
-		let last = 0;
-		for (const entry of this.chart) {
-			if (entry > maxFrameTime) maxFrameTime = entry;
-			totalFrameTime += entry;
-			last = entry;
-		}
-		const averageFrameTime = totalFrameTime / this.chart.length;
-		this.targetMaxHeight = maxFrameTime;
-
-		this.renderDebugOverlay(ctx, bounds, averageFrameTime, maxFrameTime, last);
-
-		if (this.chart.length < 2) return;
-		this.renderChart(ctx, bounds, this.currentMaxHeight, targetFrameTime);
+		ctx.globalCompositeOperation = "destination-over";
+		renderBackground(ctx, cursor);
 
 		ctx.restore();
 	}
+	// #endregion
 
 }

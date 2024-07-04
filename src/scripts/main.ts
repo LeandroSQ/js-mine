@@ -45,7 +45,6 @@ export class Main {
 
 	// Misc
 	public globalTimer = 0;
-	public analytics: Analytics;
 
 	// Game logic
 	public state: AState;
@@ -84,10 +83,7 @@ export class Main {
 			];
 
 			// Analytics profiler, only on DEBUG
-			if (DEBUG) {
-				this.analytics = new Analytics(this);
-				modules.push(this.analytics.setup());
-			}
+			if (DEBUG) modules.push(Analytics.setup());
 
 			await Promise.all(modules);
 
@@ -230,16 +226,16 @@ export class Main {
 				InputHandler.update();
 			}
 
-			if (DEBUG) this.analytics.endUpdate();
+			if (DEBUG) Analytics.endUpdate();
 		}
 
-		if (DEBUG) this.analytics.update(deltaTime);
+		if (DEBUG) Analytics.update(deltaTime);
 		this.globalTimer += deltaTime;
 	}
 
 	private loop(time: DOMHighResTimeStamp) {
-		if (DEBUG) this.analytics.startFrame(time);
-		
+		if (DEBUG) Analytics.startFrame(time);
+
 		this.update(time);
 
 		// GUI
@@ -253,13 +249,13 @@ export class Main {
 		Gizmo.render(this.gui.context);
 		Gizmo.clear();
 
-		if (DEBUG && !Terminal.isVisible()) this.analytics.render(this.gui.context);
+		if (DEBUG && !Terminal.isVisible()) Analytics.render(this.gui.context);
 		Terminal.render(this.gui.context);
 
 		// GIF
 		if (this.isRecording) GIFUtils.addFrame(this.gl.canvas, this.gui.canvas);
 
-		if (DEBUG) this.analytics.endFrame();
+		if (DEBUG) Analytics.endFrame();
 
 		this.requestNextFrame();
 	}

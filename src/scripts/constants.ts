@@ -21,7 +21,7 @@ export const GUI_MARGIN = 15;
 
 // Font
 export const FONT_SIZE = 12;
-export const FONT_FAMILY = "'Ubuntu Mono', sans-serif";
+export const FONT_FAMILY = "'Pixelify sans', 'Ubuntu Mono', sans-serif";
 
 // Input
 export const LONG_PRESS = 110;
