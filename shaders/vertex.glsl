@@ -11,6 +11,7 @@ uniform mat4 u_projection;
 
 out vec2 v_texCoord;
 out vec3 v_normal;
+out float v_fogDepth;
 
 void main() {
 	// Calculate the normal in world space
@@ -23,4 +24,8 @@ void main() {
 
 	// Pass the texture
 	v_texCoord = a_texcoord;
+
+	// Calculate the fog depth
+	v_fogDepth = -(u_modelView * vec4(a_position, 1.0)).z;
+
 }
