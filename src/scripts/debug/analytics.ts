@@ -103,7 +103,7 @@ export namespace Analytics {
 			chunkUpdateCount = 0;
 
 			performance.getUsedMemory()
-				.then(memory => memory = memory);
+				.then(bytes => memory = bytes);
 		}
 
 		currentMaxHeight = Math.lerp(currentMaxHeight, targetMaxHeight, deltaTime * 4);
