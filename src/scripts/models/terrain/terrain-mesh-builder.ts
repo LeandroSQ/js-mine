@@ -36,12 +36,12 @@ export class TerrainMeshBuilder {
 
 					const pos = new Vector3(x, y, z);
 
-					if (y < CHUNK_HEIGHT) this.addFace(pos, Direction.Up, voxel);
-					if (y > 0) this.addFace(pos, Direction.Down, voxel);
-					this.addFace(pos, Direction.West, voxel);
-					this.addFace(pos, Direction.East, voxel);
 					this.addFace(pos, Direction.North, voxel);
 					this.addFace(pos, Direction.South, voxel);
+					if (y < CHUNK_HEIGHT) this.addFace(pos, Direction.Up, voxel);
+					if (y > 0) this.addFace(pos, Direction.Down, voxel);
+					this.addFace(pos, Direction.East, voxel);
+					this.addFace(pos, Direction.West, voxel);
 				}
 			}
 		}
@@ -118,7 +118,9 @@ export class TerrainMeshBuilder {
 		if (adjacentVoxel) return true;
 
 		const neighbor = this.getNeighbor(side);
-		if (!neighbor) return false;
+		// If there is no neighbor, we can assume that the face is not obstructed
+		// But if we are dealing with the sides, just ignore this face, it will be handled by the neighbor when it generates its mesh
+		if (!neighbor) return side !== Direction.Up && side !== Direction.Down;
 
 		// Convert it into global position
 		const worldPosition = new Vector3(this.position.x * CHUNK_SIZE, 0, this.position.y * CHUNK_SIZE).add(adjacentVoxelPosition);
