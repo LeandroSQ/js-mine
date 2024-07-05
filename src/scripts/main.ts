@@ -18,6 +18,8 @@ import { Vector2 } from "./models/math/vector2";
 import { vec3 } from "gl-matrix";
 import { Terminal } from "./debug/terminal";
 import { InputHandler } from "./input/input-handler";
+import { Texture } from "./models/texture";
+import { SETTINGS } from "./settings";
 
 
 const SKIP_WEBGL = false;
@@ -251,6 +253,45 @@ export class Main {
 
 		if (DEBUG && !Terminal.isVisible()) Analytics.render(this.gui.context);
 		Terminal.render(this.gui.context);
+
+		if (Texture.temp) {
+			const imgX = this.screen.width / 2 - Texture.temp.width / 2;
+			const imgY = this.screen.height / 2 - Texture.temp.height / 2;
+			const spriteWidth = SETTINGS.TEXTURE_ATLAS_SIZE + SETTINGS.TEXTURE_PADDING * 2;
+			const spriteHeight = SETTINGS.TEXTURE_ATLAS_SIZE + SETTINGS.TEXTURE_PADDING * 2;
+			this.gui.context.drawImage(Texture.temp, imgX, imgY);
+
+			// Draw horizontal lines
+			this.gui.context.strokeStyle = "red";
+			for (let y = 0; y < spriteHeight; y++) {
+				this.gui.context.beginPath();
+				this.gui.context.moveTo(imgX, imgY + y * spriteHeight);
+				this.gui.context.lineTo(imgX+Texture.temp.width, imgY + y * spriteHeight);
+				this.gui.context.stroke();
+			}
+
+			// Draw vertical lines
+			for (let x = 0; x < spriteWidth; x++) {
+				this.gui.context.beginPath();
+				this.gui.context.moveTo(imgX + x * spriteWidth, imgY);
+				this.gui.context.lineTo(imgX + x * spriteWidth, imgY + Texture.temp.height);
+				this.gui.context.stroke();
+			}
+
+			// Draw center of tiles without padding
+			const rows = Texture.temp.height / spriteHeight;
+			const cols = Texture.temp.width / spriteWidth;
+			for (let x = 0; x < cols; x++) {
+				for (let y = 0; y < rows; y++) {
+					const startX = imgX + x * spriteWidth + SETTINGS.TEXTURE_PADDING;
+					const startY = imgY + y * spriteHeight + SETTINGS.TEXTURE_PADDING;
+					const endX = startX + SETTINGS.TEXTURE_ATLAS_SIZE;
+					const endY = startY + SETTINGS.TEXTURE_ATLAS_SIZE;
+					this.gui.context.strokeStyle = "green";
+					this.gui.context.strokeRect(startX, startY, SETTINGS.TEXTURE_ATLAS_SIZE, SETTINGS.TEXTURE_ATLAS_SIZE);
+				}
+			}
+		}
 
 		// GIF
 		if (this.isRecording) GIFUtils.addFrame(this.gl.canvas, this.gui.canvas);

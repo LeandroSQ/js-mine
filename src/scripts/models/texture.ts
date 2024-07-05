@@ -1,3 +1,4 @@
+import { SETTINGS } from "../settings";
 import { Optional } from "../types/optional";
 import { ImageUtils } from "../utils/image";
 import { Log } from "../utils/log";
@@ -10,9 +11,18 @@ export class Texture {
 
 	constructor(private gl: WebGLContext) { }
 
-	async load(url: string, nearestNeighborFiltering = true) {
+	public static async loadTerrain(gl: WebGLContext) {
+		// All blocks will share the same texture, for now
+		if (!Texture.terrain) {
+			Texture.terrain = new Texture(gl);
+			await Texture.terrain.load("terrain", true, true);
+		}
+	}
+
+	async load(url: string, nearestNeighborFiltering = true, padding = false) {
 		// Load image
-		const image = await ImageUtils.load(url);
+		let image: HTMLCanvasElement | HTMLImageElement = await ImageUtils.load(url);
+		if (padding) image = ImageUtils.applyPadding(image);
 
 		// Create texture
 		const texture = this.gl.createTexture();
@@ -34,7 +44,7 @@ export class Texture {
 		this.gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_S, GL.CLAMP_TO_EDGE);
 		this.gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_T, GL.CLAMP_TO_EDGE);
 
-		this.gl.enableAnisotropicFiltering();
+		// this.gl.enableAnisotropicFiltering();
 	}
 
 	bind() {
