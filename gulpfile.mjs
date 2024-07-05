@@ -67,7 +67,7 @@ function watchHtml() {
 }
 
 function handleTs() {
-	return src(["./src/scripts/main.ts", "./src/scripts/jobs/*.worker.ts"])
+	return src(["src/scripts/main.ts", "src/scripts/jobs/*.worker.ts"])
 		.pipe(gulpEsbuild())
 		.pipe(dest("./dist/scripts"))
 		.pipe(reloadBrowsers());
@@ -78,33 +78,28 @@ function watchTs() {
 }
 
 function handleShaders() {
-	if (isProduction) {
-		return src("./src/shaders/**/**.glsl")
-			.pipe(dest("./dist/shaders"))
-			.pipe(reloadBrowsers());
-	} else {
-		return src("./src/shaders/**/**.glsl")
-			.pipe(symlink("./dist/shaders", { force: true }));
-	}
+	return src("src/shaders/**/*.glsl")
+		.pipe(dest("./dist/shaders"))
+		.pipe(reloadBrowsers());
 }
 
 function watchShaders() {
-	return watch("src/shaders/**.glsl", reloadBrowsers());
+	return watch("src/shaders/**/*.glsl", handleShaders);
 }
 
 function handleAssets() {
 	if (isProduction) {
-		return src("./src/assets/**/**.*")
+		return src("src/assets/**/**.*")
 			.pipe(dest("./dist/assets"))
 			.pipe(reloadBrowsers());
 	} else {
-		return src("./src/assets/**/**.*")
+		return src("src/assets/**/**.*")
 			.pipe(symlink("./dist/assets", { force: true }));
 	}
 }
 
 function handleSCSS() {
-	return src("./src/styles/**.scss")
+	return src("src/styles/**.scss")
 		.pipe(sourcemaps.init())
 		.pipe(sass(cssOptions).on("error", sass.logError))
 		.pipe(cssAutoPrefixer())
@@ -115,7 +110,7 @@ function handleSCSS() {
 }
 
 function watchSCSS() {
-	return watch("./src/styles/**.scss", handleSCSS);
+	return watch("src/styles/**.scss", handleSCSS);
 }
 
 // Export tasks
@@ -129,7 +124,7 @@ export const build = series(clean, parallel(assets, shaders, scss, html, ts));
 export const dev = series(clean,
 	parallel(
 		initializeBrowserSync,
-		parallel(assets, shaders, scss, html, ts),
+		build,
 		parallel(watchShaders, watchSCSS, watchHtml, watchTs)
 	)
 );
