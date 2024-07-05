@@ -8,7 +8,7 @@ in vec2 v_texcoord;
 
 out vec4 fragColor;
 
-const float MIX_AMOUNT = 0.75;
+const float MIX_AMOUNT = 0.5;
 
 vec3 applyContrast(vec3 color, float contrast) {
 	return (color - 0.5) * contrast + 0.5;

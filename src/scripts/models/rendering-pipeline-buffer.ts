@@ -23,17 +23,16 @@ export class RenderingPipelineBuffer {
 	}
 
 	public async addFilter(name: string) {
-		const invertY = this.filters.length % 2 === 0;
 		const filter = new Shader(this.gl, `filter-${name}`);
 		await filter.setup({
 			source: {
 				vertex: "vertex-passthrough",
-				fragment: `filter-${name}`
+				fragment: `filters/${name}`
 			},
-			uniforms: ["u_texture"],
+			uniforms: ["u_texture", "u_depth"],
 			buffers: {
 				vertex: {
-					data: Quad.vertices.map(x => invertY ? -x : x),
+					data: Quad.vertices,
 					attribute: "a_position"
 				},
 				uv: {
@@ -59,11 +58,11 @@ export class RenderingPipelineBuffer {
 	}
 
 	public bind() {
-		this.primary.bind();
+		if (this.filters.length > 0) this.primary.bind();
 	}
 
 	public unbind() {
-		this.primary.unbind();
+		if (this.filters.length > 0) this.primary.unbind();
 	}
 
 	public resize() {
@@ -83,17 +82,18 @@ export class RenderingPipelineBuffer {
 			const lastFilter = i === this.filters.length - 1;
 
 			if (!lastFilter) this.secondary.bind();
-
-			filter.bind();
 			this.primary.bindTexture();
+			filter.bind();
 			this.gl.drawElements(GL.TRIANGLES, Quad.indices.length, GL.UNSIGNED_SHORT, 0);
 
 			if (!lastFilter) {
+				this.secondary.blit(false);
 				this.secondary.unbind();
 				this.swap();
 			}
 		}
 
+		this.primary.blit(true);
 
 	}
 

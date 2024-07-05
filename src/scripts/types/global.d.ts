@@ -61,10 +61,12 @@ declare global {
 
 	interface WebGLRenderingContext {
 		enableAnisotropicFiltering: () => void;
+		get maxSamplesForMSAA(): number;
 	}
 
 	interface WebGL2RenderingContext {
 		enableAnisotropicFiltering: () => void;
+		get maxSamplesForMSAA(): number;
 	}
 
 	const DEBUG: boolean;

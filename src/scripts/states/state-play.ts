@@ -51,9 +51,10 @@ export class StatePlay extends AState {
 
 	private updateCameraRotation(deltaTime: number) {
 		const rotationSpeed = 20;
+		const maxPitch = 89;
 		this.camera.pitch -= InputHandler.getLookVertical() * deltaTime * rotationSpeed;
-		this.camera.pitch = Math.clamp(this.camera.pitch, -89, 89);
-		this.camera.yaw += InputHandler.getLookHorizontal() * deltaTime * rotationSpeed;
+		this.camera.pitch = Math.clamp(this.camera.pitch, -maxPitch, maxPitch);
+		this.camera.yaw -= InputHandler.getLookHorizontal() * deltaTime * rotationSpeed;
 	}
 
 	private updateCameraMovement(deltaTime: number) {
@@ -69,9 +70,9 @@ export class StatePlay extends AState {
 		}
 		if (movementX !== 0) {
 			const right = this.camera.right;
-			this.camera.position[0] += right[0] * deltaTime * movementSpeed * movementX;
-			this.camera.position[1] += right[1] * deltaTime * movementSpeed * movementX;
-			this.camera.position[2] += right[2] * deltaTime * movementSpeed * movementX;
+			this.camera.position[0] -= right[0] * deltaTime * movementSpeed * movementX;
+			this.camera.position[1] -= right[1] * deltaTime * movementSpeed * movementX;
+			this.camera.position[2] -= right[2] * deltaTime * movementSpeed * movementX;
 		}
 
 		if (InputHandler.isCrouching()) {

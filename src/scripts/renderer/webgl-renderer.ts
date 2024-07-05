@@ -10,6 +10,8 @@ import { Gizmo3D } from "../debug/gizmo3d";
 import { SETTINGS } from "../settings";
 import { ChunkManager } from "../models/terrain/chunk-manager";
 import { ChunkMesh } from "../models/terrain/chunk-mesh";
+import { Analytics } from "../debug/analytics";
+import { Texture } from "../models/texture";
 
 export class WebGLRenderer {
 
@@ -45,7 +47,22 @@ export class WebGLRenderer {
 		Log.debug("WebGLRenderer", "Creating canvas...");
 		this.canvas = document.createElement("canvas");
 		this.canvas.id = "webgl-canvas";
-		const options: WebGLContextAttributes = { antialias: true, depth: true, preserveDrawingBuffer: true };
+
+		// Workaround for MSAA and post-processing effects
+		// When using MSAA and rendering to a texture, the MSAA buffer is not used for post-processing effects
+		// And that will result in a error
+		// So whenever we have any filter enabled and intend to use MSAA, we disable MSAA native support and use a multisample render buffer instead
+		let antialias: boolean = SETTINGS.USE_MSAA;
+		if (SETTINGS.USE_MSAA && (SETTINGS.FILTER_COLOR_CORRECTION_ENABLED || SETTINGS.FILTER_FXAA_ENABLED || SETTINGS.FILTER_SHARPEN_ENABLED)) {
+			Log.warn("WebGLRenderer", "Disabling native MSAA in favor of multisample render buffer for post-processing effects.");
+			antialias = false;
+		}
+
+		const options: WebGLContextAttributes = {
+			antialias,
+			depth: false,
+			preserveDrawingBuffer: true
+		};
 		const gl = this.canvas.getContext("webgl2", options) ?? this.canvas.getContext("webgl", options) ?? this.canvas.getContext("experimental-webgl", options);
 		if (!gl) throw new Error("Could not get WebGL context");
 		this.gl = gl as WebGLContext;
@@ -53,21 +70,24 @@ export class WebGLRenderer {
 		document.body.appendChild(this.canvas);
 
 		this.gl.enable(GL.DEPTH_TEST);
-		this.gl.cullFace(GL.BACK);
-
-		this.gl.enable(GL.CULL_FACE);
 		this.gl.depthFunc(GL.LEQUAL);
 		this.gl.clearDepth(1.0);
-		/* this.gl.enable(GL.BLEND);
-		this.gl.blendFunc(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA);
-		this.gl.depthMask(false); */
+
+		this.gl.enable(GL.CULL_FACE);
+		this.gl.cullFace(GL.BACK);
+
+		// Detect maximum available samples for MSAA
+		if (SETTINGS.USE_MSAA) {
+			if (!(this.gl instanceof WebGL2RenderingContext)) Log.warn("FrameBuffer", "MSAA is only supported on WebGL2");
+			else if (this.gl.maxSamplesForMSAA <= 0) Log.warn("FrameBuffer", "MSAA is not supported on this device");
+			else Log.info("FrameBuffer", `MSAA is supported with maximum of ${this.gl.maxSamplesForMSAA} samples`);
+		}
 	}
 
 	private async setupTextures() {
 		Log.debug("WebGLRenderer", "Setting up textures...");
-
-		// Ensure to flip the Y axis of the texture. 'cos WebGL is weird
-		this.gl.pixelStorei(GL.UNPACK_FLIP_Y_WEBGL, true);
+		// Load terrain texture
+		await Texture.loadTerrain(this.gl);
 	}
 
 	private async setupMesh() {
@@ -83,9 +103,9 @@ export class WebGLRenderer {
 		await this.setupTextures();
 		await Gizmo3D.setup(this.gl);
 
-		// await this.frameBuffer.addFilter("fxaa");
-		// await this.frameBuffer.addFilter("sharpen");
-		await this.frameBuffer.addFilter("gamma");
+		if (SETTINGS.FILTER_FXAA_ENABLED) await this.frameBuffer.addFilter("fxaa");
+		if (SETTINGS.FILTER_SHARPEN_ENABLED) await this.frameBuffer.addFilter("sharpen");
+		if (SETTINGS.FILTER_COLOR_CORRECTION_ENABLED) await this.frameBuffer.addFilter("color-correction");
 	}
 	// #endregion
 
@@ -116,7 +136,7 @@ export class WebGLRenderer {
 
 
 		for (const chunk of visibleChunks) {
-			this.main.analytics.notifyChunkVisible(chunk);
+			Analytics.notifyChunkVisible(chunk);
 			if (SETTINGS.RENDER_CHUNKS) {
 				chunk.render(this.gl, projection, view);
 			}
@@ -151,19 +171,26 @@ export class WebGLRenderer {
         const cameraView = camera.getViewMatrix();
         mat4.invert(cameraView, cameraView);
 
+		const cameraRotation = vec3.create();
+		vec3.set(cameraRotation, Math.toRadians(camera.pitch), Math.toRadians(camera.yaw), Math.toRadians(camera.roll));
+		const cameraRotationMatrix = mat4.create();
+		mat4.rotate(cameraRotationMatrix, cameraRotationMatrix, camera.pitch, [1, 0, 0]);
+		mat4.rotate(cameraRotationMatrix, cameraRotationMatrix, camera.yaw, [0, 1, 0]);
+		mat4.rotate(cameraRotationMatrix, cameraRotationMatrix, camera.roll, [0, 0, 1]);
+
         Gizmo3D.box(
             position,
             vec3.fromValues(0.5, 0.5, 0.5),
-            vec3.fromValues(Math.toRadians(camera.pitch), Math.toRadians(camera.yaw), Math.toRadians(camera.roll)),
+			cameraRotation,
             this.main.useDebugCamera ? vec4.fromValues(1, 0, 0, 1) : vec4.fromValues(0, 0, 1, 1),
-            true
+            false
         );
 
         // Calculate the near plane, ensuring that the camera is looking at the center of the near plane
-        const nearCenter = vec3.create();
+        /* const nearCenter = vec3.create();
         vec3.scaleAndAdd(nearCenter, position, forward, near);
         vec3.scaleAndAdd(nearCenter, nearCenter, up, near / 2);
-        mat4.lookAt(nearPlane, position, nearCenter, up);
+        mat4.lookAt(nearPlane, position, nearCenter, up); */
 
         /* Gizmo3D.quad(
             nearCenter,
@@ -173,13 +200,13 @@ export class WebGLRenderer {
         ); */
 
         // Forward
-        const forwardEnd = vec3.create();
+       /*  const forwardEnd = vec3.create();
         vec3.scaleAndAdd(forwardEnd, position, forward, 100);
         Gizmo3D.line(
             position,
             forwardEnd,
             vec4.fromValues(1, 1, 1, 1)
-        );
+        ); */
 
         /* Gizmo3D.frustum(
             this.main.useDebugCamera ? this.main.playerCamera : this.main.debugCamera,

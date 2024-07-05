@@ -52,12 +52,6 @@ export class ChunkMesh {
 	}
 
 	public static async setup(gl: WebGLContext) {
-		// All blocks will share the same texture, for now
-		if (!Texture.terrain) {
-			Texture.terrain = new Texture(gl);
-			await Texture.terrain.load("terrain");
-		}
-
 		// Setup the shader
 		this.shader = new Shader(gl, "geometry");
 		await this.shader.setup({

@@ -19,7 +19,6 @@ const vec3 lightDirection = normalize(vec3(0.0f, 1.0f, 0));
 
 void main() {
     float lightIntensity = max(pow(max(dot(v_normal, lightDirection), 0.0), 2.0), 0.35);
-
 	vec3 color = lightColor * lightIntensity + shadowColor * (1.0 - lightIntensity);
 
 	// Flip texture vertically
@@ -28,7 +27,7 @@ void main() {
 
 	// Fog
 	float fogAmount = smoothstep(fogNear, fogFar, v_fogDepth);
-	fragColor = mix(vec4(fogColor, 1.0), fragColor, fogAmount);
+	// fragColor = mix(vec4(fogColor, 1.0), fragColor, fogAmount);
 
 	// Debug normals
 	// fragColor = vec4(normalize(v_normal) * 0.5 + 0.5, 1.0);

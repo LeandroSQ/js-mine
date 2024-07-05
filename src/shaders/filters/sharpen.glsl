@@ -8,7 +8,8 @@ in vec2 v_texcoord;
 
 out vec4 fragColor;
 
-const float SHARPEN_AMOUNT = 0.45;
+const float SHARPEN_AMOUNT = 0.15;
+
 
 // Adapted from https://igortrindade.wordpress.com/2010/04/23/fun-with-opengl-and-shaders/
 vec4 sharpen() {

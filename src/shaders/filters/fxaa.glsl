@@ -9,13 +9,11 @@ in vec2 v_texcoord;
 out vec4 fragColor;
 
 // FXAA BASE SETTINGS
-const float FXAA_SPAN_MAX = 4.0;
+const float FXAA_SPAN_MAX = 8.0;
 const float FXAA_REDUCE_MIN = 1.0 / 128.0;
-const float FXAA_REDUCE_MUL = 1.0 / 4.0;
+const float FXAA_REDUCE_MUL = 1.0 / 8.0;
 const float FXAA_DIR_THRESHOLD = 0.75;
-const float FXAA_MIX = 1.0;
-
-const float SHARPEN_AMOUNT = 0.35;
+const float FXAA_MIX = 0.25;
 
 const vec3 luma = vec3(0.299, 0.587, 0.114);
 

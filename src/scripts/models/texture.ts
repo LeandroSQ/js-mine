@@ -44,7 +44,7 @@ export class Texture {
 		this.gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_S, GL.CLAMP_TO_EDGE);
 		this.gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_T, GL.CLAMP_TO_EDGE);
 
-		// this.gl.enableAnisotropicFiltering();
+		this.gl.enableAnisotropicFiltering();
 	}
 
 	bind() {
