@@ -1,17 +1,8 @@
 import { TextAlign } from "../../enums/text-align";
+import FileSaver from 'file-saver';
 
 HTMLCanvasElement.prototype.screenshot = function (filename = "download.png") {
-	const a = document.createElement("a");
-	a.download = filename;
-	a.href = this.toDataURL("image/png;base64");
-	a.style.visibility = "hidden";
-	a.style.display = "none";
-	document.body.appendChild(a);
-
-	setTimeout(() => {
-		a.click();
-		document.body.removeChild(a);
-	}, 100);
+	this.toBlob(blob => FileSaver.saveAs(blob, filename));
 };
 
 CanvasRenderingContext2D.prototype.clear = function () {

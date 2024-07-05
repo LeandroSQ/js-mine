@@ -45,7 +45,7 @@ export class WebGLRenderer {
 		Log.debug("WebGLRenderer", "Creating canvas...");
 		this.canvas = document.createElement("canvas");
 		this.canvas.id = "webgl-canvas";
-		const options: WebGLContextAttributes = { antialias: true, depth: true };
+		const options: WebGLContextAttributes = { antialias: true, depth: true, preserveDrawingBuffer: true };
 		const gl = this.canvas.getContext("webgl2", options) ?? this.canvas.getContext("webgl", options) ?? this.canvas.getContext("experimental-webgl", options);
 		if (!gl) throw new Error("Could not get WebGL context");
 		this.gl = gl as WebGLContext;
